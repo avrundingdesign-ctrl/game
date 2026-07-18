@@ -20,11 +20,14 @@ const PROFILE_COLORS := {
 }
 
 var rng := RandomNumberGenerator.new()
+var _tree_positions: Array[Vector3] = []
 
 @onready var hud: CanvasLayer = $HUD
 
 func _ready() -> void:
 	GameManager.reset()
+	Gamemaker.reset()
+	SponsorSystem.reset()
 	rng.randomize()
 	_build_lake()
 	_build_ponds()
@@ -32,6 +35,10 @@ func _ready() -> void:
 	_build_berry_bushes()
 	_spawn_pedestals_and_tributes()
 	_spawn_bloodbath_loot()
+	Gamemaker.feast_started.connect(_on_feast_started)
+	Gamemaker.ponds_dried.connect(_on_ponds_dried)
+	Gamemaker.wildfire_started.connect(_on_wildfire_started)
+	Gamemaker.mutts_released.connect(_on_mutts_released)
 	print("[Arena] Aufbau fertig: %d Tribute, %d Pickups, Seed %d" % [
 		get_tree().get_nodes_in_group("tributes").size(),
 		get_tree().get_nodes_in_group("pickups").size(),
@@ -83,6 +90,7 @@ func _spawn_pedestals_and_tributes() -> void:
 
 		if is_player:
 			hud.bind_player(tribute)
+			SponsorSystem.bind_player(tribute)
 		else:
 			_color_ai(tribute)
 
@@ -216,3 +224,41 @@ func _build_forest() -> void:
 		tree.add_child(collision)
 
 		add_child(tree)
+		_tree_positions.append(at)
+
+	_spawn_wasp_nests()
+
+## Jaegerwespen-Nester an zufaelligen Baeumen
+func _spawn_wasp_nests() -> void:
+	for i in 6:
+		if _tree_positions.is_empty():
+			return
+		var at: Vector3 = _tree_positions[rng.randi() % _tree_positions.size()]
+		add_child(TrackerJackerNest.create(at + Vector3(0.4, 3.2, 0)))
+
+# --- Gamemaker-Events -------------------------------------------------------
+
+func _on_feast_started(_position: Vector3) -> void:
+	var feast_pool := ["medikit", "medikit", "schwert", "trockenfleisch", "wasserflasche", "pfeile", "verband", "brot"]
+	for i in feast_pool.size():
+		var angle := TAU * i / feast_pool.size()
+		var at := Vector3(cos(angle) * 6.0, 0.0, sin(angle) * 6.0)
+		var pickup := LootPickup.create(feast_pool[i], at)
+		pickup.item["name"] = "%s (Fest)" % pickup.item.name
+		add_child(pickup)
+
+func _on_ponds_dried() -> void:
+	for pond in get_tree().get_nodes_in_group("ponds"):
+		pond.queue_free()
+
+func _on_wildfire_started(center: Vector3) -> void:
+	add_child(FireZone.create(center))
+
+func _on_mutts_released() -> void:
+	var fallen := GameManager.all_fallen_districts
+	var count := mini(5, maxi(3, fallen.size()))
+	for i in count:
+		var district: int = fallen[i % maxi(1, fallen.size())] if not fallen.is_empty() else 0
+		var angle := rng.randf() * TAU
+		var at := Vector3(cos(angle), 0, sin(angle)) * 200.0
+		add_child(WolfMutt.create(at, district))

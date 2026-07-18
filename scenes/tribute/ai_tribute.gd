@@ -26,6 +26,8 @@ func _ready() -> void:
 	add_to_group("tributes")
 	_rng.randomize()
 	_items_wanted = 3 if profil == "karriero" else (2 if profil in ["kaempfer", "opportunist"] else 1)
+	Gamemaker.feast_started.connect(_on_feast)
+	Gamemaker.wildfire_started.connect(_on_wildfire)
 
 func _physics_process(delta: float) -> void:
 	if not alive:
@@ -46,8 +48,22 @@ func _physics_process(delta: float) -> void:
 # --- Denken (alle 0,5 s) ----------------------------------------------------
 
 func _think() -> void:
+	# Fliehen vor Wolfsmutts hat absolute Prioritaet
+	var mutt := _nearest_mutt(20.0)
+	if mutt != null:
+		_start_flee_from(mutt.global_position)
+		return
+
 	# Beduerfnisse haben Vorrang (ausser mitten im Kampf)
 	if state != State.HUNT:
+		if bleeding_seconds > 3.0 and best_medicine_index() >= 0:
+			selected_slot = best_medicine_index()
+			consume_selected()
+			equip_best_weapon()
+		if thirst < 50.0 and best_water_index() >= 0:
+			selected_slot = best_water_index()
+			consume_selected()
+			equip_best_weapon()
 		if thirst < 45.0 and state != State.GOTO_WATER:
 			_start_goto_water()
 			return
@@ -225,6 +241,32 @@ func _nearest_campfire(max_distance: float) -> Node3D:
 func _is_night() -> bool:
 	return DayNight.hour >= 21.0 or DayNight.hour < 5.0
 
+func _nearest_mutt(max_distance: float) -> Node3D:
+	var best: Node3D = null
+	var best_distance := max_distance
+	for mutt in get_tree().get_nodes_in_group("mutts"):
+		var distance: float = global_position.distance_to(mutt.global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best = mutt
+	return best
+
+## Feast: Beduerftige riskieren den Gang zum Fuellhorn.
+func _on_feast(_position: Vector3) -> void:
+	if not alive:
+		return
+	var needy := health < 70.0 or hunger < 50.0 or best_weapon_damage() <= FIST_DAMAGE
+	if needy or profil == "karriero":
+		_items_wanted = maxi(_items_wanted, 1)
+		_claim_next_pickup(400.0)
+
+## Waldbrand: raus aus der Zone, weg vom Feuer.
+func _on_wildfire(center: Vector3) -> void:
+	if not alive:
+		return
+	if global_position.distance_to(center) < 130.0:
+		_start_flee_from(center)
+
 func _start_flee_from(danger: Vector3) -> void:
 	state = State.FLEE
 	_flee_from = danger
@@ -282,7 +324,7 @@ func _nearest_enemy(max_distance: float) -> TributeBase:
 func _can_detect(other: TributeBase, distance: float) -> bool:
 	if GameManager.phase == GameManager.Phase.BLOODBATH:
 		return distance <= 45.0
-	var sight_range := 26.0
+	var sight_range := 26.0 * WeatherSystem.sight_multiplier()
 	if _is_night():
 		sight_range *= 0.45
 	sight_range *= 1.0 - float(other.stats.tarnung) * 0.05
@@ -308,7 +350,7 @@ func _move(_delta: float) -> void:
 		_has_move_target = false
 		move_and_slide()
 		return
-	var urgent_thirst := state == State.GOTO_WATER and thirst < 25.0
+	var urgent_thirst := state == State.GOTO_WATER and thirst < 35.0
 	is_sprinting = state in [State.RUSH, State.FLEE, State.HUNT] or urgent_thirst
 	var speed := sprint_speed() if is_sprinting else move_speed()
 	var direction := to_target.normalized()

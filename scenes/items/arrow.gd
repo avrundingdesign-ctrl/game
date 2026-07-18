@@ -63,6 +63,10 @@ func _physics_process(delta: float) -> void:
 			collider.bleeding_seconds = maxf(collider.bleeding_seconds, 20.0)
 		queue_free()
 		return
+	if collider is WolfMutt:
+		collider.take_damage(damage, shooter.tribute_name if shooter != null else "Pfeil")
+		queue_free()
+		return
 
 	# Im Boden/Baum steckengeblieben: als Pickup wiederverwertbar
 	_stuck = true

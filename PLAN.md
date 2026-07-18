@@ -29,14 +29,16 @@ Details zum Spieldesign: siehe [GAME_DESIGN.md](GAME_DESIGN.md).
 - [x] Nachtkälte (23–5 Uhr) statt Schlafsystem; Schlafsack schützt; passive Heilung bei guter Versorgung
 - [ ] Essen braten am Feuer (→ Phase 5)
 
-## Phase 3 — Gamemaker / Regie (M3)
-- [ ] Event-Director: Spannungsmetrik + Eventpool
-- [ ] Wetter: Regen, Hitze, Nebel (Zustandsmaschine + Übergänge)
-- [ ] Waldbrand-Event (Zone + Schaden + Treiber-Logik)
-- [ ] Jägerwespen (Schwarm, Halluzinations-Effekt)
-- [ ] Feast-Event am Füllhorn
-- [ ] Wasser-Austrocknung (Endgame) + Wolfsmutt-Finale
-- [ ] Sponsoren-Rating + Fallschirm-Geschenke
+## Phase 3 — Gamemaker / Regie (M3) ✅
+- [x] Event-Director: Langeweile-Metrik (20 Arena-Stunden ohne Tod → Eingriff)
+- [x] Wetter: Regen (löscht Feuer), Nebel (Sicht 45 %), Gluthitze (Durst 1,8×)
+- [x] Waldbrand-Event (wachsende Zone, 6 Schaden/s, KI flieht Richtung Zentrum)
+- [x] Jägerwespen-Nester (6 an Bäumen; Schwarm verfolgt, Gift = DoT + Verlangsamung)
+- [x] Feast-Event am Füllhorn (8 Top-Items, Bedürftige + Karrieros riskieren es)
+- [x] Wasser-Austrocknung (Finale/Tag 4: Teiche weg, nur der See bleibt)
+- [x] Wolfsmutt-Finale (3–5 Mutts mit Distriktnummern der Gefallenen, treiben zum Zentrum)
+- [x] Sponsoren: Rating (Kills +15, Charisma-Bonus), Geschenke bei kritischem Bedürfnis, steigende Schwelle, Fallschirm-Einschweben
+- [x] Lautsprecher-Ansagen der Spielmacher im HUD
 
 ## Phase 4 — Grafik-Pass (M4)
 - [ ] WorldEnvironment: SDFGI, volumetrischer Nebel, SSAO, Tonemapping

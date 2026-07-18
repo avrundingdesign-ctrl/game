@@ -151,3 +151,11 @@ func _attack() -> void:
 			continue  # nicht im Blickfeld
 		try_melee_attack(other)
 		return
+	# Wolfsmutts im Nahkampf treffen
+	if _melee_cooldown <= 0.0:
+		for mutt in get_tree().get_nodes_in_group("mutts"):
+			var to_mutt: Vector3 = mutt.global_position - global_position
+			if to_mutt.length() <= MELEE_RANGE + 0.3 and forward.dot(to_mutt.normalized()) >= 0.3:
+				_melee_cooldown = MELEE_COOLDOWN
+				mutt.take_damage(melee_damage(), tribute_name)
+				return

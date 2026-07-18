@@ -28,6 +28,7 @@ var phase: Phase = Phase.COUNTDOWN
 var day_number := 1
 var tributes_alive := 0
 var deaths_today: Array[Dictionary] = []
+var all_fallen_districts: Array[int] = []
 var player_kills := 0
 var player_alive := true
 
@@ -39,6 +40,7 @@ func reset() -> void:
 	day_number = 1
 	tributes_alive = 0
 	deaths_today = []
+	all_fallen_districts = []
 	player_kills = 0
 	player_alive = true
 	_phase_timer = 0.0
@@ -83,6 +85,7 @@ func on_sunset() -> void:
 func report_death(tribute_name: String, district: int, killer_name: String) -> void:
 	tributes_alive -= 1
 	deaths_today.append({"name": tribute_name, "district": district})
+	all_fallen_districts.append(district)
 	tribute_died.emit(tribute_name, district, killer_name)
 	print("[Kanone] %s (D%d) gefallen — %s. Noch %d am Leben." % [tribute_name, district, killer_name, tributes_alive])
 	if killer_name == PLAYER_NAME:

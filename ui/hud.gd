@@ -14,6 +14,8 @@ var _slot_labels: Array[Label] = []
 var _fallen_panel: PanelContainer
 var _fallen_label: Label
 var _bleed_label: Label
+var _venom_label: Label
+var _announce_label: Label
 var _game_over_rect: ColorRect
 var _game_over_title: Label
 var _game_over_stats: Label
@@ -104,6 +106,19 @@ func _ready() -> void:
 	_bleed_label.position = Vector2(16, -160)
 	_bleed_label.visible = false
 
+	_venom_label = _label(root, 18, Color(0.8, 0.7, 0.1))
+	_venom_label.text = "VERGIFTET — Jaegerwespen!"
+	_venom_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_venom_label.position = Vector2(16, -185)
+	_venom_label.visible = false
+
+	# Spielmacher-Ansage (Lautsprecher)
+	_announce_label = _label(root, 30, Color(0.95, 0.85, 0.5))
+	_announce_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_announce_label.position = Vector2(-400, 150)
+	_announce_label.size = Vector2(800, 120)
+	_announce_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
 	# Himmelsprojektion (abends)
 	_fallen_panel = PanelContainer.new()
 	_fallen_panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -152,6 +167,11 @@ func _ready() -> void:
 	GameManager.tribute_died.connect(_on_tribute_died)
 	GameManager.fallen_projection.connect(_on_fallen_projection)
 	GameManager.game_ended.connect(_on_game_ended)
+	Gamemaker.announcement.connect(_on_announcement)
+	SponsorSystem.gift_incoming.connect(func() -> void:
+		_add_log("Ein silberner Fallschirm schwebt herab ..."))
+	WeatherSystem.weather_changed.connect(func(_w: int) -> void:
+		_add_log("Wetterumschwung: %s" % WeatherSystem.weather_name()))
 	_countdown_label.text = str(GameManager.countdown_seconds)
 
 func _label(parent: Control, font_size: int, color: Color) -> Label:
@@ -170,10 +190,12 @@ func bind_player(bound: TributeBase) -> void:
 
 func _process(_delta: float) -> void:
 	var hour: float = DayNight.hour
-	_status_label.text = "Tag %d   %02d:%02d   %d am Leben" % [
-		GameManager.day_number, int(hour), int(fmod(hour, 1.0) * 60), GameManager.tributes_alive]
+	_status_label.text = "Tag %d   %02d:%02d   %s   %d am Leben" % [
+		GameManager.day_number, int(hour), int(fmod(hour, 1.0) * 60),
+		WeatherSystem.weather_name(), GameManager.tributes_alive]
 	if player != null:
 		_bleed_label.visible = player.bleeding_seconds > 0.0
+		_venom_label.visible = player.venom_seconds > 0.0
 
 func _input(event: InputEvent) -> void:
 	if _game_over and event.is_action_pressed("ui_accept"):
@@ -184,6 +206,12 @@ func _input(event: InputEvent) -> void:
 
 func _on_countdown_tick(seconds_left: int) -> void:
 	_countdown_label.text = str(seconds_left)
+
+func _on_announcement(text: String) -> void:
+	_announce_label.text = "»%s«\n— Die Spielmacher" % text
+	get_tree().create_timer(8.0).timeout.connect(func() -> void:
+		if _announce_label.text.contains(text):
+			_announce_label.text = "")
 
 func _on_phase_changed(new_phase: GameManager.Phase) -> void:
 	match new_phase:

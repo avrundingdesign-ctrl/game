@@ -41,7 +41,7 @@ roughness = 0.35
 [node name="Arena" type="Node3D"]
 script = ExtResource("1_arena")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." groups=["world_env"]]
 environment = SubResource("env")
 
 [node name="Sun" type="DirectionalLight3D" parent="." groups=["sun"]]

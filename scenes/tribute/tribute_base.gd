@@ -25,6 +25,7 @@ var alive := true
 var inventory: Array[Dictionary] = []
 var selected_slot := 0
 var bleeding_seconds := 0.0
+var venom_seconds := 0.0   # Jaegerwespen-Gift: Schaden + Verlangsamung
 var is_sprinting := false
 var _melee_cooldown := 0.0
 var _last_attacker_name := ""
@@ -41,7 +42,7 @@ func _process(delta: float) -> void:
 		return
 	_melee_cooldown = maxf(0.0, _melee_cooldown - delta)
 	# Durst leert sich in ~1,5 Arena-Tagen, Hunger in ~2,5 (skaliert mit Taglaenge)
-	var factor := _needs_decay_factor()
+	var factor := _needs_decay_factor() * WeatherSystem.thirst_multiplier()
 	var day: float = DayNight.day_length_seconds
 	thirst = maxf(0.0, thirst - 100.0 / (1.5 * day) * factor * delta)
 	hunger = maxf(0.0, hunger - 100.0 / (2.5 * day) * factor * delta)
@@ -52,6 +53,10 @@ func _process(delta: float) -> void:
 	if bleeding_seconds > 0.0:
 		bleeding_seconds = maxf(0.0, bleeding_seconds - delta)
 		take_damage(1.2 * delta, "Blutverlust")
+	# Wespengift: Schaden ueber Zeit + Verlangsamung
+	if venom_seconds > 0.0:
+		venom_seconds = maxf(0.0, venom_seconds - delta)
+		take_damage(1.5 * delta, "Jaegerwespen")
 	# Tiefe Nacht (23-5 Uhr) ohne Schlafsack oder Lagerfeuer: Kaelteschaden
 	if (DayNight.hour < 5.0 or DayNight.hour >= 23.0) and not _is_warm():
 		take_damage(15.0 / (0.25 * day) * delta, "Kaelte")
@@ -64,6 +69,8 @@ func move_speed() -> float:
 	var base: float = 3.2 + float(stats.geschick) * 0.25
 	if thirst < 20.0 or hunger < 20.0:
 		base *= 0.7  # geschwaecht
+	if venom_seconds > 0.0:
+		base *= 0.75  # vergiftet
 	return base
 
 func sprint_speed() -> float:
@@ -127,7 +134,19 @@ func consume_selected() -> bool:
 
 func best_food_index() -> int:
 	for i in inventory.size():
-		if inventory[i].type == "essen":
+		if inventory[i].type == "essen" and not inventory[i].get("giftig", false):
+			return i
+	return -1
+
+func best_water_index() -> int:
+	for i in inventory.size():
+		if inventory[i].type == "wasser":
+			return i
+	return -1
+
+func best_medicine_index() -> int:
+	for i in inventory.size():
+		if inventory[i].type == "medizin":
 			return i
 	return -1
 

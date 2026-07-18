@@ -15,6 +15,9 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 GameManager="*res://systems/game_manager.gd"
 DayNight="*res://systems/day_night.gd"
 LootTables="*res://systems/loot_tables.gd"
+WeatherSystem="*res://systems/weather_system.gd"
+Gamemaker="*res://systems/gamemaker.gd"
+SponsorSystem="*res://systems/sponsor_system.gd"
 
 [display]
 
