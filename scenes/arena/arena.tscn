@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/tribute/player.tscn" id="1_playerscene"]
+[ext_resource type="Script" path="res://scenes/arena/arena.gd" id="1_arena"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="2_hud"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.35, 0.46, 0.72, 1)
@@ -32,7 +33,13 @@ top_radius = 0.2
 bottom_radius = 4.0
 height = 8.0
 
+[sub_resource type="StandardMaterial3D" id="mat_horn"]
+albedo_color = Color(0.85, 0.68, 0.25, 1)
+metallic = 0.85
+roughness = 0.35
+
 [node name="Arena" type="Node3D"]
+script = ExtResource("1_arena")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("env")
@@ -53,6 +60,6 @@ shape = SubResource("shape_ground")
 [node name="Cornucopia" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
 mesh = SubResource("mesh_horn")
+surface_material_override/0 = SubResource("mat_horn")
 
-[node name="Player" parent="." instance=ExtResource("1_playerscene")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 25)
+[node name="HUD" parent="." instance=ExtResource("2_hud")]

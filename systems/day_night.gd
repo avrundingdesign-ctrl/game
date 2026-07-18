@@ -10,6 +10,10 @@ signal time_changed(hour: float)
 var hour := 8.0  # Start am Morgen
 var _was_day := true
 
+func _ready() -> void:
+	if OS.get_environment("PANEM_FAST") == "1":
+		day_length_seconds = 60.0
+
 func _process(delta: float) -> void:
 	if GameManager.phase in [GameManager.Phase.COUNTDOWN, GameManager.Phase.GAME_OVER]:
 		return

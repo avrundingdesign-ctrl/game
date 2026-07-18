@@ -1,0 +1,28 @@
+{
+	"tributes": [
+		{"name": "Marvel Quinn", "district": 1, "profil": "karriero", "stats": {"staerke": 8, "geschick": 7, "ausdauer": 7, "ueberleben": 3, "tarnung": 3, "charisma": 7}},
+		{"name": "Glitzer Laren", "district": 1, "profil": "karriero", "stats": {"staerke": 6, "geschick": 8, "ausdauer": 6, "ueberleben": 3, "tarnung": 4, "charisma": 8}},
+		{"name": "Cato Brandt", "district": 2, "profil": "karriero", "stats": {"staerke": 9, "geschick": 7, "ausdauer": 8, "ueberleben": 4, "tarnung": 2, "charisma": 6}},
+		{"name": "Clove Merrik", "district": 2, "profil": "karriero", "stats": {"staerke": 6, "geschick": 9, "ausdauer": 6, "ueberleben": 4, "tarnung": 5, "charisma": 5}},
+		{"name": "Volt Ganter", "district": 3, "profil": "techniker", "stats": {"staerke": 4, "geschick": 6, "ausdauer": 4, "ueberleben": 5, "tarnung": 6, "charisma": 4}},
+		{"name": "Lumen Sarik", "district": 3, "profil": "techniker", "stats": {"staerke": 3, "geschick": 7, "ausdauer": 4, "ueberleben": 5, "tarnung": 7, "charisma": 4}},
+		{"name": "Finn Maro", "district": 4, "profil": "karriero", "stats": {"staerke": 7, "geschick": 8, "ausdauer": 7, "ueberleben": 6, "tarnung": 4, "charisma": 7}},
+		{"name": "Nerissa Vale", "district": 4, "profil": "karriero", "stats": {"staerke": 6, "geschick": 7, "ausdauer": 7, "ueberleben": 6, "tarnung": 5, "charisma": 6}},
+		{"name": "Ohm Petrik", "district": 5, "profil": "opportunist", "stats": {"staerke": 4, "geschick": 6, "ausdauer": 5, "ueberleben": 5, "tarnung": 7, "charisma": 3}},
+		{"name": "Finke Rohl", "district": 5, "profil": "ueberlebende", "stats": {"staerke": 3, "geschick": 7, "ausdauer": 5, "ueberleben": 6, "tarnung": 8, "charisma": 4}},
+		{"name": "Diesel Kartner", "district": 6, "profil": "opportunist", "stats": {"staerke": 5, "geschick": 5, "ausdauer": 6, "ueberleben": 4, "tarnung": 5, "charisma": 3}},
+		{"name": "Waggon Selis", "district": 6, "profil": "ueberlebende", "stats": {"staerke": 4, "geschick": 5, "ausdauer": 5, "ueberleben": 5, "tarnung": 6, "charisma": 4}},
+		{"name": "Espen Holt", "district": 7, "profil": "kaempfer", "stats": {"staerke": 7, "geschick": 6, "ausdauer": 7, "ueberleben": 7, "tarnung": 5, "charisma": 4}},
+		{"name": "Linde Ahorn", "district": 7, "profil": "ueberlebende", "stats": {"staerke": 5, "geschick": 6, "ausdauer": 6, "ueberleben": 7, "tarnung": 6, "charisma": 5}},
+		{"name": "Web Tessler", "district": 8, "profil": "ueberlebende", "stats": {"staerke": 4, "geschick": 5, "ausdauer": 4, "ueberleben": 5, "tarnung": 7, "charisma": 4}},
+		{"name": "Naeh Rilla", "district": 8, "profil": "ueberlebende", "stats": {"staerke": 3, "geschick": 6, "ausdauer": 4, "ueberleben": 5, "tarnung": 7, "charisma": 5}},
+		{"name": "Korn Weizel", "district": 9, "profil": "ueberlebende", "stats": {"staerke": 5, "geschick": 4, "ausdauer": 6, "ueberleben": 6, "tarnung": 5, "charisma": 3}},
+		{"name": "Aehre Malin", "district": 9, "profil": "ueberlebende", "stats": {"staerke": 4, "geschick": 5, "ausdauer": 5, "ueberleben": 6, "tarnung": 6, "charisma": 4}},
+		{"name": "Herdis Stall", "district": 10, "profil": "opportunist", "stats": {"staerke": 6, "geschick": 4, "ausdauer": 6, "ueberleben": 7, "tarnung": 4, "charisma": 3}},
+		{"name": "Vieh Tanda", "district": 10, "profil": "ueberlebende", "stats": {"staerke": 5, "geschick": 5, "ausdauer": 6, "ueberleben": 7, "tarnung": 5, "charisma": 4}},
+		{"name": "Thresh Odair", "district": 11, "profil": "kaempfer", "stats": {"staerke": 9, "geschick": 5, "ausdauer": 8, "ueberleben": 8, "tarnung": 5, "charisma": 4}},
+		{"name": "Rue Sattler", "district": 11, "profil": "ueberlebende", "stats": {"staerke": 2, "geschick": 9, "ausdauer": 5, "ueberleben": 9, "tarnung": 9, "charisma": 8}},
+		{"name": "Ash Kohler", "district": 12, "profil": "kaempfer", "stats": {"staerke": 6, "geschick": 7, "ausdauer": 8, "ueberleben": 8, "tarnung": 6, "charisma": 6}},
+		{"name": "Spieler", "district": 12, "profil": "spieler", "stats": {"staerke": 6, "geschick": 7, "ausdauer": 7, "ueberleben": 7, "tarnung": 6, "charisma": 7}}
+	]
+}
