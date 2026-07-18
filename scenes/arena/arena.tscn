@@ -1,0 +1,58 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/tribute/player.tscn" id="1_playerscene"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.35, 0.46, 0.72, 1)
+sky_horizon_color = Color(0.64, 0.65, 0.67, 1)
+ground_horizon_color = Color(0.64, 0.65, 0.67, 1)
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+tonemap_mode = 3
+sdfgi_enabled = true
+glow_enabled = true
+glow_intensity = 0.3
+
+[sub_resource type="PlaneMesh" id="mesh_ground"]
+size = Vector2(500, 500)
+
+[sub_resource type="StandardMaterial3D" id="mat_ground"]
+albedo_color = Color(0.32, 0.28, 0.22, 1)
+roughness = 1.0
+
+[sub_resource type="WorldBoundaryShape3D" id="shape_ground"]
+
+[sub_resource type="CylinderMesh" id="mesh_horn"]
+top_radius = 0.2
+bottom_radius = 4.0
+height = 8.0
+
+[node name="Arena" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="." groups=["sun"]]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 30, 0)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("mesh_ground")
+surface_material_override/0 = SubResource("mat_ground")
+
+[node name="GroundCollision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("shape_ground")
+
+[node name="Cornucopia" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("mesh_horn")
+
+[node name="Player" parent="." instance=ExtResource("1_playerscene")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 25)
