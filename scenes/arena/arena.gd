@@ -27,7 +27,9 @@ func _ready() -> void:
 	GameManager.reset()
 	rng.randomize()
 	_build_lake()
+	_build_ponds()
 	_build_forest()
+	_build_berry_bushes()
 	_spawn_pedestals_and_tributes()
 	_spawn_bloodbath_loot()
 	print("[Arena] Aufbau fertig: %d Tribute, %d Pickups, Seed %d" % [
@@ -133,6 +135,39 @@ func _build_lake() -> void:
 	surface.material_override = material
 	surface.position.y = 0.05
 	lake.add_child(surface)
+
+## Kleine Teiche: trocknen im Endgame zuerst aus (Phase 3)
+func _build_ponds() -> void:
+	for center in [Vector3(-140, 0, -60), Vector3(60, 0, -150)]:
+		var pond := Node3D.new()
+		pond.position = center
+		pond.add_to_group("lake")
+		pond.add_to_group("ponds")
+		pond.set_meta("radius", 8.0)
+		add_child(pond)
+
+		var surface := MeshInstance3D.new()
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 8.0
+		mesh.bottom_radius = 8.0
+		mesh.height = 0.1
+		surface.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.15, 0.35, 0.6, 0.85)
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material.roughness = 0.1
+		surface.material_override = material
+		surface.position.y = 0.05
+		pond.add_child(surface)
+
+func _build_berry_bushes() -> void:
+	for i in 60:
+		var angle := rng.randf() * TAU
+		var radius := rng.randf_range(60.0, 220.0)
+		var at := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+		if at.distance_to(LAKE_CENTER) < LAKE_RADIUS + 5.0:
+			continue
+		add_child(BerryBush.create(at, rng.randf() < 0.15))
 
 func _build_forest() -> void:
 	var trunk_mesh := CylinderMesh.new()

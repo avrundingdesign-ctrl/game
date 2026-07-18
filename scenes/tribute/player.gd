@@ -12,6 +12,7 @@ const INTERACT_RANGE := 2.5
 @onready var pivot: Node3D = $CameraPivot
 
 var _nearby_pickup: LootPickup = null
+var _nearby_bush: BerryBush = null
 var _can_drink := false
 
 func _ready() -> void:
@@ -35,7 +36,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		_interact()
 	elif event.is_action_pressed("consume"):
-		consume_selected()
+		if selected_item().get("id", "") == "lagerfeuer_set":
+			_place_campfire()
+		else:
+			consume_selected()
 	elif event.is_action_pressed("attack"):
 		_attack()
 	else:
@@ -57,7 +61,8 @@ func _physics_process(delta: float) -> void:
 
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	var speed := sprint_speed() if Input.is_action_pressed("sprint") else move_speed()
+	is_sprinting = Input.is_action_pressed("sprint") and direction.length() > 0.1
+	var speed := sprint_speed() if is_sprinting else move_speed()
 	if direction:
 		velocity.x = direction.x * speed
 		velocity.z = direction.z * speed
@@ -72,13 +77,14 @@ func _physics_process(delta: float) -> void:
 
 func _update_interact_hint() -> void:
 	_nearby_pickup = null
+	_nearby_bush = null
 	_can_drink = false
 
-	var lake := get_tree().get_first_node_in_group("lake")
-	if lake != null:
+	for lake in get_tree().get_nodes_in_group("lake"):
 		var lake_radius: float = lake.get_meta("radius", 25.0)
 		if global_position.distance_to(lake.global_position) < lake_radius + 1.5:
 			_can_drink = true
+			break
 
 	var best_distance := INTERACT_RANGE
 	for pickup in get_tree().get_nodes_in_group("pickups"):
@@ -87,8 +93,16 @@ func _update_interact_hint() -> void:
 			best_distance = distance
 			_nearby_pickup = pickup
 
+	if _nearby_pickup == null:
+		for bush in get_tree().get_nodes_in_group("bushes"):
+			if bush.has_berries and global_position.distance_to(bush.global_position) < INTERACT_RANGE:
+				_nearby_bush = bush
+				break
+
 	if _nearby_pickup != null:
 		interact_hint_changed.emit("[E] %s aufheben" % _nearby_pickup.item.name)
+	elif _nearby_bush != null:
+		interact_hint_changed.emit("[E] Beeren pfluecken")
 	elif _can_drink:
 		interact_hint_changed.emit("[E] Trinken")
 	else:
@@ -98,10 +112,33 @@ func _interact() -> void:
 	if _nearby_pickup != null:
 		if not _nearby_pickup.try_take(self):
 			interact_hint_changed.emit("Inventar voll!")
+	elif _nearby_bush != null:
+		var berries: Dictionary = _nearby_bush.pick(self)
+		if not berries.is_empty() and not add_item(berries):
+			interact_hint_changed.emit("Inventar voll!")
 	elif _can_drink:
 		drink_from_source()
 
+func _place_campfire() -> void:
+	if GameManager.phase == GameManager.Phase.COUNTDOWN:
+		return
+	inventory.remove_at(selected_slot)
+	selected_slot = clampi(selected_slot, 0, maxi(0, inventory.size() - 1))
+	inventory_changed.emit(inventory, selected_slot)
+	var fire := Campfire.new()
+	fire.position = global_position - global_transform.basis.z * 1.2
+	get_parent().add_child(fire)
+
 func _attack() -> void:
+	# Bogen: Pfeil in Kamerarichtung
+	if equipped_weapon().get("id", "") == "bogen":
+		var camera: Camera3D = pivot.get_node("SpringArm/Camera")
+		var direction := -camera.global_transform.basis.z
+		if not try_shoot_arrow(global_position + Vector3.UP * 1.5 + direction * 0.6, direction):
+			if arrow_count() <= 0:
+				interact_hint_changed.emit("Keine Pfeile!")
+		return
+
 	var forward := -global_transform.basis.z
 	for node in get_tree().get_nodes_in_group("tributes"):
 		var other := node as TributeBase

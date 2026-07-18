@@ -13,6 +13,7 @@ var _bars := {}
 var _slot_labels: Array[Label] = []
 var _fallen_panel: PanelContainer
 var _fallen_label: Label
+var _bleed_label: Label
 var _game_over_rect: ColorRect
 var _game_over_title: Label
 var _game_over_stats: Label
@@ -91,6 +92,18 @@ func _ready() -> void:
 	_hint_label.size = Vector2(500, 30)
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
+	# Fadenkreuz
+	var crosshair := _label(root, 22, Color(1, 1, 1, 0.6))
+	crosshair.text = "•"
+	crosshair.set_anchors_preset(Control.PRESET_CENTER)
+	crosshair.position = Vector2(-6, -14)
+
+	_bleed_label = _label(root, 18, Color(0.9, 0.2, 0.2))
+	_bleed_label.text = "BLUTUNG — Verband noetig!"
+	_bleed_label.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_bleed_label.position = Vector2(16, -160)
+	_bleed_label.visible = false
+
 	# Himmelsprojektion (abends)
 	_fallen_panel = PanelContainer.new()
 	_fallen_panel.set_anchors_preset(Control.PRESET_CENTER)
@@ -159,6 +172,8 @@ func _process(_delta: float) -> void:
 	var hour: float = DayNight.hour
 	_status_label.text = "Tag %d   %02d:%02d   %d am Leben" % [
 		GameManager.day_number, int(hour), int(fmod(hour, 1.0) * 60), GameManager.tributes_alive]
+	if player != null:
+		_bleed_label.visible = player.bleeding_seconds > 0.0
 
 func _input(event: InputEvent) -> void:
 	if _game_over and event.is_action_pressed("ui_accept"):
@@ -209,7 +224,10 @@ func _on_needs_changed(health: float, thirst: float, hunger: float) -> void:
 func _on_inventory_changed(inventory: Array, selected_slot: int) -> void:
 	for i in 6:
 		if i < inventory.size():
-			_slot_labels[i].text = "%d  %s" % [i + 1, inventory[i].name]
+			var label: String = inventory[i].name
+			if inventory[i].has("count"):
+				label += " (%d)" % inventory[i].count
+			_slot_labels[i].text = "%d  %s" % [i + 1, label]
 		else:
 			_slot_labels[i].text = "%d  —" % (i + 1)
 		_slot_labels[i].modulate = Color(1, 0.9, 0.4) if i == selected_slot and i < inventory.size() else Color.WHITE

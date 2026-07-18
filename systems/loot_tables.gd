@@ -19,17 +19,23 @@ const ITEMS := {
 	"brot": {"name": "Brot", "type": "essen", "nutrition": 30.0, "color": Color(0.8, 0.65, 0.4)},
 	"apfel": {"name": "Apfel", "type": "essen", "nutrition": 15.0, "color": Color(0.4, 0.75, 0.3)},
 	"wasserflasche": {"name": "Wasserflasche", "type": "wasser", "hydration": 45.0, "color": Color(0.3, 0.55, 0.9)},
-	# --- Ausruestung (Phase 2+: Funktion) ---
+	# --- Munition ---
+	"pfeile": {"name": "Pfeile", "type": "munition", "count": 8, "color": Color(0.8, 0.8, 0.6)},
+	# --- Ausruestung ---
 	"schlafsack": {"name": "Schlafsack", "type": "ausruestung", "color": Color(0.3, 0.4, 0.3)},
+	"lagerfeuer_set": {"name": "Lagerfeuer-Set", "type": "ausruestung", "color": Color(0.9, 0.45, 0.1)},
 	"seil": {"name": "Seil", "type": "ausruestung", "color": Color(0.7, 0.6, 0.4)},
 	"jod": {"name": "Jodflasche", "type": "ausruestung", "color": Color(0.5, 0.3, 0.5)},
 	"plane": {"name": "Plane", "type": "ausruestung", "color": Color(0.4, 0.45, 0.5)},
+	# --- Gesammeltes (nicht im Fuellhorn) ---
+	"beeren": {"name": "Beeren", "type": "essen", "nutrition": 20.0, "color": Color(0.3, 0.15, 0.4)},
+	"nachtschatten": {"name": "Beeren", "type": "essen", "nutrition": 0.0, "giftig": true, "color": Color(0.3, 0.15, 0.4)},
 }
 
 ## Ring-Tabellen: Item-Pools und Anzahl der Spawns pro Partie.
-const RING_A := {"pool": ["bogen", "schwert", "speer", "wurfmesser", "axt", "medikit", "schlafsack"], "count": 10, "radius_min": 3.0, "radius_max": 8.0}
-const RING_B := {"pool": ["messer", "trockenfleisch", "wasserflasche", "verband", "seil", "jod", "speer"], "count": 14, "radius_min": 12.0, "radius_max": 24.0}
-const RING_C := {"pool": ["kleines_messer", "brot", "apfel", "wasserflasche", "plane"], "count": 16, "radius_min": 28.0, "radius_max": 48.0}
+const RING_A := {"pool": ["bogen", "pfeile", "schwert", "speer", "wurfmesser", "axt", "medikit", "schlafsack"], "count": 12, "radius_min": 3.0, "radius_max": 8.0}
+const RING_B := {"pool": ["messer", "trockenfleisch", "wasserflasche", "verband", "seil", "jod", "speer", "lagerfeuer_set", "pfeile"], "count": 14, "radius_min": 12.0, "radius_max": 24.0}
+const RING_C := {"pool": ["kleines_messer", "brot", "apfel", "wasserflasche", "plane", "verband"], "count": 16, "radius_min": 28.0, "radius_max": 48.0}
 
 func get_item(id: String) -> Dictionary:
 	var item: Dictionary = ITEMS[id].duplicate()
