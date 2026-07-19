@@ -329,7 +329,7 @@ func _build_grass() -> void:
 
 ## Jaegerwespen-Nester an zufaelligen Baeumen
 func _spawn_wasp_nests() -> void:
-	for i in 6:
+	for i in 4:
 		if _tree_positions.is_empty():
 			return
 		var at: Vector3 = _tree_positions[rng.randi() % _tree_positions.size()]

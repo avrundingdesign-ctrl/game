@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
 		take_damage(1.5 * delta, "Jaegerwespen")
 	# Tiefe Nacht (23-5 Uhr) ohne Schlafsack oder Lagerfeuer: Kaelteschaden
 	if (DayNight.hour < 5.0 or DayNight.hour >= 23.0) and not _is_warm():
-		take_damage(15.0 / (0.25 * day) * delta, "Kaelte")
+		take_damage(11.0 / (0.25 * day) * delta, "Kaelte")
 	elif health < 100.0 and health > 0.0 and thirst > 60.0 and hunger > 60.0 and bleeding_seconds <= 0.0:
 		# Langsame Heilung bei guter Versorgung (~12 HP pro Tag)
 		health = minf(100.0, health + 12.0 / day * delta)
@@ -92,8 +92,9 @@ func die(killer_name: String) -> void:
 	health = 0.0
 	died.emit(self, killer_name)
 	GameManager.report_death(tribute_name, district, killer_name)
-	# Leiche: Kapsel umlegen, Kollision deaktivieren (Hovercraft kommt spaeter)
-	rotation.z = PI / 2.0
+	# Leiche: nur das Mesh umlegen (Kamera bleibt aufrecht), Kollision aus
+	if has_node("Mesh"):
+		get_node("Mesh").rotation.z = PI / 2.0
 	set_collision_layer_value(1, false)
 	set_physics_process(false)
 

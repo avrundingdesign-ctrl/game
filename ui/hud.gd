@@ -240,7 +240,8 @@ func _on_game_ended(victory: bool, stats: Dictionary) -> void:
 	_game_over_title.text = "DU BIST SIEGER DER 74. SPIELE!" if victory else "DU BIST GEFALLEN"
 	_game_over_title.add_theme_color_override("font_color",
 		Color(1, 0.85, 0.3) if victory else Color(0.85, 0.3, 0.3))
-	_game_over_stats.text = "Überlebte Tage: %d      Kills: %d" % [stats.tage, stats.kills]
+	_game_over_stats.text = "Überlebte Tage: %d      Kills: %d      Publikums-Rating: %.0f" % [
+		stats.tage, stats.kills, stats.get("rating", 0.0)]
 	_game_over_rect.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 

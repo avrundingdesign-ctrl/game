@@ -40,17 +40,22 @@ Details zum Spieldesign: siehe [GAME_DESIGN.md](GAME_DESIGN.md).
 - [x] Sponsoren: Rating (Kills +15, Charisma-Bonus), Geschenke bei kritischem Bedürfnis, steigende Schwelle, Fallschirm-Einschweben
 - [x] Lautsprecher-Ansagen der Spielmacher im HUD
 
-## Phase 4 — Grafik-Pass (M4)
-- [ ] WorldEnvironment: SDFGI, volumetrischer Nebel, SSAO, Tonemapping
-- [ ] Terrain-Texturen (PBR), Vegetation mit Wind-Shader
-- [ ] Wasser-Shader (See), Wetter-VFX (Regen/Asche-Partikel)
-- [ ] Audio: Ambience, 3D-Sounds, Hymne, Kanone
+## Phase 4 — Grafik-Pass (M4) ✅
+- [x] WorldEnvironment: SDFGI, Wetter-Nebel, Glow, ACES-Tonemapping
+- [x] Prozedurales Terrain (Noise-Hügel, Plateau, Wasser-Senken, Vertex-Farben)
+- [x] Vegetation: variantenreiche Bäume, 9000 Gras-Büschel mit Wind-Shader
+- [x] Wasser-Shader (See + Teiche), Regen-/Glut-/Funken-/Rauch-Partikel
+- [x] Tag/Nacht-Lichtstimmung: warme Dämmerung, Mondlicht
+- [ ] Audio: Ambience, 3D-Sounds, Hymne, Kanone (braucht Sound-Assets → offen)
 
-## Phase 5 — Inhalt & Polish (M5)
-- [ ] 24 Tribut-Profile mit Distrikt-Archetypen (Datengetrieben, JSON)
-- [ ] Allianzen & Verrat (Karriero-Rudel)
-- [ ] Hauptmenü, Reaping-Intro, Statistik-Screen
-- [ ] Balancing-Durchgang + Bugfixes
+## Phase 5 — Inhalt & Polish (M5) ✅ (Kern)
+- [x] 24 Tribut-Profile mit Distrikt-Archetypen (data/tributes.json)
+- [x] Karriero-Rudel + Verrat im Endgame (ab 8 Überlebenden bricht die Allianz)
+- [x] Hauptmenü (Start, Steuerung, Beenden), Statistik im Game-Over (Tage/Kills/Rating)
+- [x] Balancing: Wespennester 6→4, KI-Nachtfeuer, Wachposten-Vorräte, Todes-Kamera-Fix
+- [ ] Reaping-Intro (Distrikt-Auslosung als Vorspann) → offen
+- [ ] Essen braten am Lagerfeuer → offen
+- [ ] Zwei-Sieger-Modus (Koop mit KI-Partner) → offen
 
 ## Arbeitsweise
 - Nach jeder abgeschlossenen Phase (und bei größeren Zwischenständen): Commit + Push.

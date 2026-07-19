@@ -342,8 +342,9 @@ func _nearest_enemy(max_distance: float) -> TributeBase:
 		var other := node as TributeBase
 		if other == self or not other.alive:
 			continue
-		# Karrieros greifen keine anderen Karrieros an (Ruedel-Allianz, Phase 1)
-		if profil == "karriero" and "profil" in other and other.profil == "karriero":
+		# Karriero-Ruedel haelt — bis das Endgame beginnt, dann Verrat (Buch-Logik)
+		if profil == "karriero" and "profil" in other and other.profil == "karriero" \
+				and GameManager.tributes_alive > 8:
 			continue
 		var distance := global_position.distance_to(other.global_position)
 		if distance < best_distance and _can_detect(other, distance):

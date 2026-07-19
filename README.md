@@ -45,8 +45,8 @@ Ein 3D-Survival-Battle-Royale nach Vorbild der 74. Hungerspiele — gebaut mit *
 - [x] Phase 0 — Projektgerüst
 - [x] Phase 1 — Graybox-Prototyp (Arena, Loot, KI-Tribute, Tag/Nacht, Bedürfnisse)
 - [x] Phase 2 — Survival Slice (Bogen, Blutungen, KI-Sinne, Beeren/Nachtschatten, Lagerfeuer, Nachtkälte)
-- [ ] Phase 3 — Gamemaker-Regie (Wetter, Waldbrand, Jägerwespen, Feast, Sponsoren)
-- [ ] Phase 4 — Grafik-Pass (PBR, SDFGI, Vegetation, Audio)
-- [ ] Phase 5 — Inhalt & Polish (Allianzen, Menü, Balancing)
+- [x] Phase 3 — Gamemaker-Regie (Wetter, Waldbrand, Jägerwespen, Feast, Wolfsmutt-Finale, Sponsoren)
+- [x] Phase 4 — Grafik-Pass (prozedurales Terrain, Shader, Partikel, Tag/Nacht-Licht)
+- [x] Phase 5 — Inhalt & Polish (Hauptmenü, Karriero-Verrat, Statistik, Balancing) — offen: Audio, Reaping-Intro, Braten, Zwei-Sieger-Modus
 
 *Hinweis: „Die Tribute von Panem" ist geschützte IP von Suzanne Collins/Lionsgate. Dieses Fanprojekt ist nicht kommerziell.*

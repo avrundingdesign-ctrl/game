@@ -106,4 +106,5 @@ func _end_game(victory: bool) -> void:
 		"tage": day_number,
 		"kills": player_kills,
 		"uebrig": tributes_alive,
+		"rating": SponsorSystem.rating,
 	})
