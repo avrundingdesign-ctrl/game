@@ -50,8 +50,8 @@ func _on_phase_changed(new_phase: GameManager.Phase) -> void:
 
 ## Die Spielmacher waehlen den passenden Eingriff.
 func _intervene() -> void:
-	# Prioritaet: Feast (einmalig, ab Tag 2, max 12 Ueberlebende) > Waldbrand > Wetter
-	if not _feast_done and GameManager.day_number >= 2 and GameManager.tributes_alive <= 18:
+	# Prioritaet: Feast (einmalig, ab Tag 2) > Waldbrand > Austrocknung > Wetter
+	if not _feast_done and GameManager.day_number >= 2:
 		_start_feast()
 	elif not _wildfire_active and _rng.randf() < 0.5:
 		_start_wildfire()

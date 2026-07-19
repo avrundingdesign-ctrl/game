@@ -19,8 +19,14 @@ const PROFILE_COLORS := {
 	"ueberlebende": Color(0.25, 0.6, 0.3),
 }
 
+const POND_CENTERS := [Vector3(-140, 0, -60), Vector3(60, 0, -150)]
+const POND_RADIUS := 8.0
+const WATER_LEVEL := -1.1
+
 var rng := RandomNumberGenerator.new()
+var terrain: TerrainBuilder
 var _tree_positions: Array[Vector3] = []
+var _rain: GPUParticles3D
 
 @onready var hud: CanvasLayer = $HUD
 
@@ -29,6 +35,7 @@ func _ready() -> void:
 	Gamemaker.reset()
 	SponsorSystem.reset()
 	rng.randomize()
+	_build_terrain()
 	_build_lake()
 	_build_ponds()
 	_build_forest()
@@ -39,12 +46,21 @@ func _ready() -> void:
 	Gamemaker.ponds_dried.connect(_on_ponds_dried)
 	Gamemaker.wildfire_started.connect(_on_wildfire_started)
 	Gamemaker.mutts_released.connect(_on_mutts_released)
+	_build_rain()
+	WeatherSystem.weather_changed.connect(func(w: int) -> void:
+		_rain.emitting = w == WeatherSystem.Weather.REGEN)
 	print("[Arena] Aufbau fertig: %d Tribute, %d Pickups, Seed %d" % [
 		get_tree().get_nodes_in_group("tributes").size(),
 		get_tree().get_nodes_in_group("pickups").size(),
 		rng.seed])
 
 func _physics_process(_delta: float) -> void:
+	# Regen folgt dem Spieler
+	if _rain != null and _rain.emitting:
+		var player := get_tree().get_first_node_in_group("player") as Node3D
+		if player != null:
+			_rain.global_position = player.global_position + Vector3(0, 18, 0)
+
 	# Arenagrenze: unsichtbares Kraftfeld
 	for node in get_tree().get_nodes_in_group("tributes"):
 		var tribute := node as TributeBase
@@ -55,6 +71,47 @@ func _physics_process(_delta: float) -> void:
 			tribute.global_position.z = flat.y
 
 # --- Aufbau -----------------------------------------------------------------
+
+func _build_rain() -> void:
+	_rain = GPUParticles3D.new()
+	var material := ParticleProcessMaterial.new()
+	material.direction = Vector3.DOWN
+	material.spread = 3.0
+	material.initial_velocity_min = 16.0
+	material.initial_velocity_max = 22.0
+	material.gravity = Vector3(0, -22, 0)
+	material.scale_min = 0.6
+	material.scale_max = 1.0
+	material.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	material.emission_box_extents = Vector3(35, 1, 35)
+	material.color = Color(0.65, 0.75, 0.85, 0.45)
+	_rain.process_material = material
+	_rain.amount = 1400
+	_rain.lifetime = 1.3
+	var drop := QuadMesh.new()
+	drop.size = Vector2(0.02, 0.4)
+	var drop_material := StandardMaterial3D.new()
+	drop_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	drop_material.albedo_color = Color(0.65, 0.75, 0.85, 0.4)
+	drop_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	drop_material.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	drop.material = drop_material
+	_rain.draw_pass_1 = drop
+	_rain.emitting = false
+	add_child(_rain)
+
+func _build_terrain() -> void:
+	terrain = TerrainBuilder.new()
+	var spots := [[LAKE_CENTER, LAKE_RADIUS]]
+	for center in POND_CENTERS:
+		spots.append([center, POND_RADIUS])
+	terrain.setup(int(rng.seed), spots)
+	terrain.build()
+	add_child(terrain)
+
+## Gelaendehoehe an Position (fuer alle Spawns).
+func ground_y(x: float, z: float) -> float:
+	return terrain.get_height(x, z)
 
 func _spawn_pedestals_and_tributes() -> void:
 	var file := FileAccess.open("res://data/tributes.json", FileAccess.READ)
@@ -70,6 +127,7 @@ func _spawn_pedestals_and_tributes() -> void:
 	for i in tributes.size():
 		var angle := TAU * i / tributes.size()
 		var spawn := Vector3(cos(angle) * PEDESTAL_RING_RADIUS, 0.0, sin(angle) * PEDESTAL_RING_RADIUS)
+		spawn.y = ground_y(spawn.x, spawn.z)
 		_build_pedestal(spawn)
 
 		var profile: Dictionary = tributes[i]
@@ -84,7 +142,7 @@ func _spawn_pedestals_and_tributes() -> void:
 		tribute.tribute_name = profile.name
 		tribute.district = profile.district
 		tribute.stats = profile.stats
-		tribute.global_position = spawn + Vector3(0, 0.3, 0)
+		tribute.global_position = spawn + Vector3(0, 0.5, 0)
 		# Blick zum Fuellhorn
 		tribute.look_at(Vector3(0, tribute.global_position.y, 0), Vector3.UP)
 
@@ -118,79 +176,73 @@ func _build_pedestal(at: Vector3) -> void:
 
 func _spawn_bloodbath_loot() -> void:
 	for spawn in LootTables.roll_bloodbath_loot(rng):
-		var pickup := LootPickup.create(spawn.id, spawn.position)
-		add_child(pickup)
+		var at: Vector3 = spawn.position
+		at.y = ground_y(at.x, at.z)
+		add_child(LootPickup.create(spawn.id, at))
 
 func _build_lake() -> void:
-	var lake := Node3D.new()
-	lake.name = "Lake"
-	lake.position = LAKE_CENTER
-	lake.add_to_group("lake")
-	lake.set_meta("radius", LAKE_RADIUS)
-	add_child(lake)
-
-	var surface := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = LAKE_RADIUS
-	mesh.bottom_radius = LAKE_RADIUS
-	mesh.height = 0.1
-	surface.mesh = mesh
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.15, 0.35, 0.6, 0.85)
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.roughness = 0.1
-	material.metallic = 0.3
-	surface.material_override = material
-	surface.position.y = 0.05
-	lake.add_child(surface)
+	add_child(_make_water_body("Lake", LAKE_CENTER, LAKE_RADIUS, ["lake"]))
 
 ## Kleine Teiche: trocknen im Endgame zuerst aus (Phase 3)
 func _build_ponds() -> void:
-	for center in [Vector3(-140, 0, -60), Vector3(60, 0, -150)]:
-		var pond := Node3D.new()
-		pond.position = center
-		pond.add_to_group("lake")
-		pond.add_to_group("ponds")
-		pond.set_meta("radius", 8.0)
-		add_child(pond)
+	for center in POND_CENTERS:
+		add_child(_make_water_body("Pond", center, POND_RADIUS, ["lake", "ponds"]))
 
-		var surface := MeshInstance3D.new()
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 8.0
-		mesh.bottom_radius = 8.0
-		mesh.height = 0.1
-		surface.mesh = mesh
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.15, 0.35, 0.6, 0.85)
-		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		material.roughness = 0.1
-		surface.material_override = material
-		surface.position.y = 0.05
-		pond.add_child(surface)
+func _make_water_body(body_name: String, center: Vector3, radius: float, groups: Array) -> Node3D:
+	var body := Node3D.new()
+	body.name = body_name
+	body.position = Vector3(center.x, 0, center.z)
+	for group in groups:
+		body.add_to_group(group)
+	body.set_meta("radius", radius)
+
+	var surface := MeshInstance3D.new()
+	var mesh := PlaneMesh.new()
+	mesh.size = Vector2(radius * 2.4, radius * 2.4)
+	mesh.subdivide_width = 24
+	mesh.subdivide_depth = 24
+	surface.mesh = mesh
+	surface.material_override = _water_material()
+	surface.position.y = WATER_LEVEL
+	body.add_child(surface)
+	return body
+
+func _water_material() -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/water.gdshader")
+	return material
 
 func _build_berry_bushes() -> void:
 	for i in 60:
 		var angle := rng.randf() * TAU
 		var radius := rng.randf_range(60.0, 220.0)
 		var at := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
-		if at.distance_to(LAKE_CENTER) < LAKE_RADIUS + 5.0:
+		if _is_near_water(at, 5.0):
 			continue
+		at.y = ground_y(at.x, at.z)
 		add_child(BerryBush.create(at, rng.randf() < 0.15))
+
+func _is_near_water(at: Vector3, margin: float) -> bool:
+	if Vector2(at.x - LAKE_CENTER.x, at.z - LAKE_CENTER.z).length() < LAKE_RADIUS + margin:
+		return true
+	for center in POND_CENTERS:
+		if Vector2(at.x - center.x, at.z - center.z).length() < POND_RADIUS + margin:
+			return true
+	return false
 
 func _build_forest() -> void:
 	var trunk_mesh := CylinderMesh.new()
 	trunk_mesh.top_radius = 0.22
-	trunk_mesh.bottom_radius = 0.3
+	trunk_mesh.bottom_radius = 0.32
 	trunk_mesh.height = 4.0
-	var trunk_material := StandardMaterial3D.new()
-	trunk_material.albedo_color = Color(0.35, 0.25, 0.15)
 
-	var crown_mesh := CylinderMesh.new()
-	crown_mesh.top_radius = 0.0
-	crown_mesh.bottom_radius = 1.8
-	crown_mesh.height = 4.5
-	var crown_material := StandardMaterial3D.new()
-	crown_material.albedo_color = Color(0.15, 0.35, 0.15)
+	var crown_meshes: Array[CylinderMesh] = []
+	for size in [[2.0, 2.6], [1.55, 2.2], [1.05, 1.9]]:
+		var crown := CylinderMesh.new()
+		crown.top_radius = 0.0
+		crown.bottom_radius = size[0]
+		crown.height = size[1]
+		crown_meshes.append(crown)
 
 	var trunk_shape := CylinderShape3D.new()
 	trunk_shape.radius = 0.3
@@ -200,23 +252,35 @@ func _build_forest() -> void:
 		var angle := rng.randf() * TAU
 		var radius := rng.randf_range(60.0, ARENA_RADIUS - 10.0)
 		var at := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
-		if at.distance_to(LAKE_CENTER) < LAKE_RADIUS + 8.0:
+		if _is_near_water(at, 8.0):
 			continue
+		at.y = ground_y(at.x, at.z)
 
 		var tree := StaticBody3D.new()
 		tree.position = at
+		tree.rotation.y = rng.randf() * TAU
+		var tree_scale := rng.randf_range(0.8, 1.5)
+		tree.scale = Vector3.ONE * tree_scale
 
+		var trunk_material := StandardMaterial3D.new()
+		trunk_material.albedo_color = Color(0.32, 0.24, 0.15).lerp(Color(0.42, 0.32, 0.2), rng.randf())
 		var trunk := MeshInstance3D.new()
 		trunk.mesh = trunk_mesh
 		trunk.material_override = trunk_material
 		trunk.position.y = 2.0
 		tree.add_child(trunk)
 
-		var crown := MeshInstance3D.new()
-		crown.mesh = crown_mesh
-		crown.material_override = crown_material
-		crown.position.y = 5.5
-		tree.add_child(crown)
+		# Krone aus 3 gestapelten Kegeln mit Farbvariation
+		var crown_material := StandardMaterial3D.new()
+		crown_material.albedo_color = Color(0.1, 0.28, 0.1).lerp(Color(0.22, 0.4, 0.14), rng.randf())
+		var crown_y := 4.2
+		for crown_mesh in crown_meshes:
+			var crown := MeshInstance3D.new()
+			crown.mesh = crown_mesh
+			crown.material_override = crown_material
+			crown.position.y = crown_y
+			tree.add_child(crown)
+			crown_y += crown_mesh.height * 0.55
 
 		var collision := CollisionShape3D.new()
 		collision.shape = trunk_shape
@@ -224,9 +288,44 @@ func _build_forest() -> void:
 		tree.add_child(collision)
 
 		add_child(tree)
-		_tree_positions.append(at)
+		_tree_positions.append(at + Vector3(0, 0, 0))
 
 	_spawn_wasp_nests()
+	_build_grass()
+
+## Grasbueschel als MultiMesh (gekreuzte Quads mit Wind-Shader)
+func _build_grass() -> void:
+	var blade := QuadMesh.new()
+	blade.size = Vector2(0.5, 0.6)
+	blade.center_offset = Vector3(0, 0.3, 0)
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/grass.gdshader")
+	blade.material = material
+
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = blade
+	multimesh.instance_count = 9000
+
+	var placed := 0
+	var attempts := 0
+	while placed < multimesh.instance_count and attempts < multimesh.instance_count * 3:
+		attempts += 1
+		var angle := rng.randf() * TAU
+		var radius := rng.randf_range(58.0, ARENA_RADIUS - 5.0)
+		var at := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+		if _is_near_water(at, 2.0):
+			continue
+		at.y = ground_y(at.x, at.z) + 0.02
+		var transform := Transform3D(Basis(Vector3.UP, rng.randf() * TAU), at)
+		multimesh.set_instance_transform(placed, transform)
+		placed += 1
+	multimesh.visible_instance_count = placed
+
+	var instance := MultiMeshInstance3D.new()
+	instance.multimesh = multimesh
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(instance)
 
 ## Jaegerwespen-Nester an zufaelligen Baeumen
 func _spawn_wasp_nests() -> void:
@@ -243,6 +342,7 @@ func _on_feast_started(_position: Vector3) -> void:
 	for i in feast_pool.size():
 		var angle := TAU * i / feast_pool.size()
 		var at := Vector3(cos(angle) * 6.0, 0.0, sin(angle) * 6.0)
+		at.y = ground_y(at.x, at.z)
 		var pickup := LootPickup.create(feast_pool[i], at)
 		pickup.item["name"] = "%s (Fest)" % pickup.item.name
 		add_child(pickup)
@@ -261,4 +361,5 @@ func _on_mutts_released() -> void:
 		var district: int = fallen[i % maxi(1, fallen.size())] if not fallen.is_empty() else 0
 		var angle := rng.randf() * TAU
 		var at := Vector3(cos(angle), 0, sin(angle)) * 200.0
+		at.y = ground_y(at.x, at.z) + 0.5
 		add_child(WolfMutt.create(at, district))

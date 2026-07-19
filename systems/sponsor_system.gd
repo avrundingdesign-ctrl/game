@@ -67,8 +67,9 @@ func _send_gift(item_id: String) -> void:
 	print("[Sponsor] Geschenk unterwegs: %s (Rating jetzt %.0f)" % [item_id, rating])
 
 	# Fallschirm: schwebt neben dem Spieler ein
+	var ground := _player.global_position.y
 	var pickup := LootPickup.create(item_id, _player.global_position + Vector3(2, 12, 2))
 	pickup.item["name"] = "%s (Sponsor!)" % pickup.item.name
 	_player.get_parent().add_child(pickup)
 	var tween := pickup.create_tween()
-	tween.tween_property(pickup, "position:y", 0.6, 6.0).set_ease(Tween.EASE_OUT)
+	tween.tween_property(pickup, "position:y", ground + 0.6, 6.0).set_ease(Tween.EASE_OUT)

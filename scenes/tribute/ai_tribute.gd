@@ -72,6 +72,16 @@ func _think() -> void:
 			consume_selected()
 			equip_best_weapon()
 
+	# Nachtvorbereitung: Feuer machen oder Waerme suchen (ohne Schlafsack)
+	if DayNight.hour >= 21.0 and DayNight.hour < 23.5 and not has_item("schlafsack") \
+			and state in [State.WANDER, State.GUARD]:
+		if has_item("lagerfeuer_set"):
+			_place_campfire()
+		else:
+			var fire := _nearest_campfire(60.0)
+			if fire != null and global_position.distance_to(fire.global_position) > 3.5:
+				_set_move_target(fire.global_position + Vector3(_rng.randf_range(-2, 2), 0, _rng.randf_range(-2, 2)))
+
 	match state:
 		State.WAIT:
 			_on_bloodbath_start()
@@ -135,7 +145,21 @@ func _after_looting() -> void:
 	else:
 		_start_wander()
 
+func _place_campfire() -> void:
+	for i in inventory.size():
+		if inventory[i].id == "lagerfeuer_set":
+			inventory.remove_at(i)
+			selected_slot = clampi(selected_slot, 0, maxi(0, inventory.size() - 1))
+			var fire := Campfire.new()
+			fire.position = global_position
+			get_parent().add_child(fire)
+			return
+
 func _think_wander() -> void:
+	# Nachts am waermenden Feuer bleiben
+	if _is_night() and _nearest_campfire(4.0) != null:
+		_has_move_target = false
+		return
 	if not _has_move_target:
 		_pick_wander_target()
 	# Sammeln beim Umherstreifen (Ueberleben-Attribut): Beeren/Wurzeln finden.
@@ -171,6 +195,11 @@ func _think_goto_water() -> void:
 func _think_guard() -> void:
 	if not _has_move_target:
 		_set_move_target(Vector3(_rng.randf_range(-18, 18), 0, _rng.randf_range(-18, 18)))
+	# Vorraete aus dem bewachten Loot-Berg nutzen
+	if thirst < 60.0 and best_water_index() < 0 and _claim_next_pickup(30.0, 0.0, "wasser"):
+		return
+	if hunger < 60.0 and best_food_index() < 0 and _claim_next_pickup(30.0, 0.0, "essen"):
+		return
 	var enemy := _nearest_enemy(22.0)
 	if enemy != null:
 		_start_hunt(enemy)
@@ -281,12 +310,15 @@ func _pick_wander_target() -> void:
 	var radius := _rng.randf_range(60.0, 200.0)
 	_set_move_target(Vector3(cos(angle) * radius, 0, sin(angle) * radius))
 
-## Beansprucht das naechste freie Pickup im Umkreis. min_radius > 0 meidet das Zentrum.
-func _claim_next_pickup(max_radius: float, min_radius := 0.0) -> bool:
+## Beansprucht das naechste freie Pickup im Umkreis. min_radius > 0 meidet das
+## Zentrum; type_filter beschraenkt auf einen Item-Typ (z. B. "wasser").
+func _claim_next_pickup(max_radius: float, min_radius := 0.0, type_filter := "") -> bool:
 	var best: LootPickup = null
 	var best_distance := INF
 	for pickup in get_tree().get_nodes_in_group("pickups"):
 		if pickup.claimed_by != null and is_instance_valid(pickup.claimed_by):
+			continue
+		if type_filter != "" and pickup.item.type != type_filter:
 			continue
 		var center_distance: float = pickup.global_position.length()
 		if center_distance < min_radius:

@@ -28,11 +28,21 @@ func _process(delta: float) -> void:
 	_was_day = is_day
 
 func _update_sun() -> void:
-	var sun := get_tree().get_first_node_in_group("sun") as DirectionalLight3D
-	if sun == null:
-		return
 	# 6 Uhr = Horizont Ost, 12 Uhr = Zenit, 20 Uhr = Horizont West
 	var t := (hour - 6.0) / 14.0
-	sun.rotation_degrees.x = -lerp(0.0, 180.0, clamp(t, 0.0, 1.0))
-	sun.visible = t > 0.01 and t < 0.99
-	sun.light_energy = clamp(sin(clamp(t, 0.0, 1.0) * PI) * 1.4, 0.05, 1.4)
+	var sun := get_tree().get_first_node_in_group("sun") as DirectionalLight3D
+	if sun != null:
+		sun.rotation_degrees.x = -lerp(0.0, 180.0, clamp(t, 0.0, 1.0))
+		sun.visible = t > 0.01 and t < 0.99
+		var elevation := sin(clamp(t, 0.0, 1.0) * PI)
+		sun.light_energy = clamp(elevation * 1.4, 0.05, 1.4)
+		# Warmes Licht bei Sonnenauf-/untergang
+		sun.light_color = Color(1.0, 0.55, 0.3).lerp(Color(1.0, 0.98, 0.92), clampf(elevation * 1.6, 0.0, 1.0))
+
+	var moon := get_tree().get_first_node_in_group("moon") as DirectionalLight3D
+	if moon != null:
+		var night_hour := fmod(hour - 20.0 + 24.0, 24.0)  # 20 Uhr -> 0, 6 Uhr -> 10
+		var night_t := clampf(night_hour / 10.0, 0.0, 1.0)
+		moon.rotation_degrees.x = -lerp(10.0, 170.0, night_t)
+		moon.light_energy = 0.25 * sin(night_t * PI)
+		moon.visible = moon.light_energy > 0.01

@@ -48,14 +48,11 @@ environment = SubResource("env")
 transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 30, 0)
 shadow_enabled = true
 
-[node name="Ground" type="StaticBody3D" parent="."]
-
-[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("mesh_ground")
-surface_material_override/0 = SubResource("mat_ground")
-
-[node name="GroundCollision" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("shape_ground")
+[node name="Moon" type="DirectionalLight3D" parent="." groups=["moon"]]
+transform = Transform3D(1, 0, 0, 0, 0.35, 0.93, 0, -0.93, 0.35, 0, 30, 0)
+light_color = Color(0.6, 0.7, 0.9, 1)
+light_energy = 0.0
+shadow_enabled = true
 
 [node name="Cornucopia" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
