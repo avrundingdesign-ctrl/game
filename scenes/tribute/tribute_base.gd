@@ -28,6 +28,7 @@ var selected_slot := 0
 var bleeding_seconds := 0.0
 var venom_seconds := 0.0   # Jaegerwespen-Gift: Schaden + Verlangsamung
 var is_sprinting := false
+var body: TributeBody
 var _melee_cooldown := 0.0
 var _last_attacker_name := ""
 
@@ -95,11 +96,22 @@ func die(killer_name: String) -> void:
 	health = 0.0
 	died.emit(self, killer_name)
 	GameManager.report_death(tribute_name, district, killer_name)
-	# Leiche: nur das Mesh umlegen (Kamera bleibt aufrecht), Kollision aus
-	if has_node("Mesh"):
+	# Leiche: nur den Koerper umlegen (Kamera bleibt aufrecht), Kollision aus
+	if body != null:
+		body.rotation.z = PI / 2.0
+		body.position.y = 0.2
+		body.set_process(false)
+	elif has_node("Mesh"):
 		get_node("Mesh").rotation.z = PI / 2.0
 	set_collision_layer_value(1, false)
 	set_physics_process(false)
+
+## Humanoiden Koerper anlegen (ersetzt die Kapsel-Platzhalter)
+func setup_body(outfit: Color) -> void:
+	body = TributeBody.new()
+	body.name = "Body"
+	add_child(body)
+	body.set_outfit(outfit)
 
 # --- Inventar ---------------------------------------------------------------
 

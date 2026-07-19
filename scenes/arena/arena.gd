@@ -6,7 +6,7 @@ const PEDESTAL_RING_RADIUS := 22.0
 const ARENA_RADIUS := 235.0
 const LAKE_CENTER := Vector3(130, 0, 90)
 const LAKE_RADIUS := 25.0
-const TREE_COUNT := 250
+const TREE_COUNT := 170
 
 const AI_SCENE := preload("res://scenes/tribute/ai_tribute.tscn")
 const PLAYER_SCENE := preload("res://scenes/tribute/player.tscn")
@@ -27,8 +27,6 @@ var rng := RandomNumberGenerator.new()
 var terrain: TerrainBuilder
 var _tree_positions: Array[Vector3] = []
 var _rain: GPUParticles3D
-var _bark_material: StandardMaterial3D
-var _needle_material: StandardMaterial3D
 var _orbit_camera: Camera3D
 var _orbit_angle := 0.0
 
@@ -187,10 +185,8 @@ func _spawn_pedestals_and_tributes() -> void:
 			_color_ai(tribute)
 
 func _color_ai(tribute: TributeBase) -> void:
-	var mesh: MeshInstance3D = tribute.get_node("Mesh")
-	var material := StandardMaterial3D.new()
-	material.albedo_color = PROFILE_COLORS.get(tribute.profil, Color.GRAY)
-	mesh.material_override = material
+	var base_color: Color = PROFILE_COLORS.get(tribute.profil, Color.GRAY)
+	tribute.setup_body(base_color.darkened(0.25))
 	var tag: Label3D = tribute.get_node("NameTag")
 	tag.text = "%s (D%d)" % [tribute.tribute_name, tribute.district]
 
@@ -265,36 +261,40 @@ func _is_near_water(at: Vector3, margin: float) -> bool:
 	return false
 
 func _build_forest() -> void:
-	# Rinde (Bark012) fuer Staemme, getoentes Triplanar-Gras als Nadelstruktur
-	_bark_material = StandardMaterial3D.new()
-	_bark_material.albedo_texture = load("res://assets/textures/Bark012/Bark012_1K-JPG_Color.jpg")
-	_bark_material.normal_enabled = true
-	_bark_material.normal_texture = load("res://assets/textures/Bark012/Bark012_1K-JPG_NormalGL.jpg")
-	_bark_material.uv1_scale = Vector3(2.0, 2.0, 1.0)
-	_bark_material.roughness = 0.95
+	# Branch-Card-Nadelbaeume: Kronen aus Zweig-Karten (generierte Alpha-Textur),
+	# gerendert als MultiMesh — der ganze Wald in 3 Draw-Calls.
+	var crown_material := StandardMaterial3D.new()
+	crown_material.albedo_texture = load("res://assets/textures/generated/branch_card.png")
+	crown_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	crown_material.alpha_scissor_threshold = 0.2
+	crown_material.alpha_antialiasing_mode = BaseMaterial3D.ALPHA_ANTIALIASING_ALPHA_TO_COVERAGE
+	crown_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	crown_material.roughness = 1.0
+	crown_material.metallic_specular = 0.1
 
-	_needle_material = StandardMaterial3D.new()
-	_needle_material.albedo_texture = load("res://assets/textures/Grass001/Grass001_1K-JPG_Color.jpg")
-	_needle_material.uv1_triplanar = true
-	_needle_material.uv1_scale = Vector3(1.6, 1.6, 1.6)
-	_needle_material.roughness = 1.0
+	var bark_material := StandardMaterial3D.new()
+	bark_material.albedo_texture = load("res://assets/textures/Bark012/Bark012_1K-JPG_Color.jpg")
+	bark_material.normal_enabled = true
+	bark_material.normal_texture = load("res://assets/textures/Bark012/Bark012_1K-JPG_NormalGL.jpg")
+	bark_material.uv1_scale = Vector3(1.5, 3.0, 1.0)
+	bark_material.albedo_color = Color(0.75, 0.72, 0.7)
+	bark_material.roughness = 0.95
 
+	var crown_meshes: Array[ArrayMesh] = [
+		_build_crown_mesh(9.0, 2.8, 1234),
+		_build_crown_mesh(7.6, 3.2, 777),
+	]
 	var trunk_mesh := CylinderMesh.new()
-	trunk_mesh.top_radius = 0.22
-	trunk_mesh.bottom_radius = 0.32
-	trunk_mesh.height = 4.0
-
-	var crown_meshes: Array[CylinderMesh] = []
-	for size in [[2.0, 2.6], [1.55, 2.2], [1.05, 1.9]]:
-		var crown := CylinderMesh.new()
-		crown.top_radius = 0.0
-		crown.bottom_radius = size[0]
-		crown.height = size[1]
-		crown_meshes.append(crown)
+	trunk_mesh.top_radius = 0.08
+	trunk_mesh.bottom_radius = 0.34
+	trunk_mesh.height = 8.0
 
 	var trunk_shape := CylinderShape3D.new()
-	trunk_shape.radius = 0.3
-	trunk_shape.height = 4.0
+	trunk_shape.radius = 0.35
+	trunk_shape.height = 5.0
+
+	var variant_transforms: Array = [[], []]
+	var trunk_transforms: Array[Transform3D] = []
 
 	for i in TREE_COUNT:
 		var angle := rng.randf() * TAU
@@ -304,42 +304,78 @@ func _build_forest() -> void:
 			continue
 		at.y = ground_y(at.x, at.z)
 
-		var tree := StaticBody3D.new()
-		tree.position = at
-		tree.rotation.y = rng.randf() * TAU
-		var tree_scale := rng.randf_range(0.8, 1.5)
-		tree.scale = Vector3.ONE * tree_scale
+		var basis := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(0.75, 1.35))
+		var transform := Transform3D(basis, at)
+		variant_transforms[rng.randi() % 2].append(transform)
+		trunk_transforms.append(Transform3D(basis, at + Vector3(0, 4.0 * basis.get_scale().y, 0)))
 
-		var trunk := MeshInstance3D.new()
-		trunk.mesh = trunk_mesh
-		trunk.material_override = _bark_material
-		trunk.position.y = 2.0
-		tree.add_child(trunk)
-
-		# Krone aus 3 gestapelten Kegeln, Nadel-Struktur per Triplanar-Gras
-		var crown_material := _needle_material.duplicate()
-		crown_material.albedo_color = Color(0.28, 0.5, 0.28).lerp(Color(0.5, 0.75, 0.4), rng.randf())
-		var crown_y := 4.2
-		for crown_mesh in crown_meshes:
-			var crown := MeshInstance3D.new()
-			crown.mesh = crown_mesh
-			crown.material_override = crown_material
-			crown.position.y = crown_y
-			tree.add_child(crown)
-			crown_y += crown_mesh.height * 0.55
-
+		var tree_body := StaticBody3D.new()
+		tree_body.position = at
 		var collision := CollisionShape3D.new()
 		collision.shape = trunk_shape
-		collision.position.y = 2.0
-		tree.add_child(collision)
+		collision.position.y = 2.5
+		tree_body.add_child(collision)
+		add_child(tree_body)
+		_tree_positions.append(at)
 
-		add_child(tree)
-		_tree_positions.append(at + Vector3(0, 0, 0))
+	# MultiMesh: Staemme + zwei Kronen-Varianten
+	_add_multimesh(trunk_mesh, trunk_transforms, bark_material)
+	for v in 2:
+		var transforms: Array[Transform3D] = []
+		transforms.assign(variant_transforms[v])
+		_add_multimesh(crown_meshes[v], transforms, crown_material)
 
 	_spawn_wasp_nests()
 	_build_grass()
 	_build_boulders()
 	_spawn_wildlife()
+
+func _add_multimesh(mesh: Mesh, transforms: Array[Transform3D], material: Material) -> void:
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = mesh
+	multimesh.instance_count = transforms.size()
+	for i in transforms.size():
+		multimesh.set_instance_transform(i, transforms[i])
+	var instance := MultiMeshInstance3D.new()
+	instance.multimesh = multimesh
+	instance.material_override = material
+	add_child(instance)
+
+## Kegelfoermige Krone aus Zweig-Karten als ein Mesh
+func _build_crown_mesh(height: float, base_radius: float, seed_value: int) -> ArrayMesh:
+	var card_rng := RandomNumberGenerator.new()
+	card_rng.seed = seed_value
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var h := 1.4
+	while h < height:
+		var t := (h - 1.4) / (height - 1.4)
+		var cards_in_ring := 7 if t < 0.6 else 4
+		for c in cards_in_ring:
+			var phi := card_rng.randf() * TAU
+			var length := lerpf(base_radius, 0.7, t) * card_rng.randf_range(0.95, 1.3)
+			var width := length * 0.75
+			var tilt := card_rng.randf_range(0.25, 0.55)
+			var basis := Basis(Vector3.UP, phi) * Basis(Vector3(0, 0, 1), -tilt)
+			var origin := Vector3(0, h + card_rng.randf_range(-0.2, 0.2), 0)
+			_add_card(surface, Transform3D(basis, origin), length, width)
+		h += 0.5
+
+	surface.generate_normals()
+	return surface.commit()
+
+func _add_card(surface: SurfaceTool, transform: Transform3D, length: float, width: float) -> void:
+	var corners := [
+		Vector3(0.05, 0, -width / 2.0), Vector3(length, 0, -width / 2.0),
+		Vector3(length, 0, width / 2.0), Vector3(0.05, 0, width / 2.0),
+	]
+	# UV-Zuschnitt auf den tatsaechlich belegten Texturbereich
+	var uvs := [Vector2(0.02, 0.2), Vector2(0.97, 0.2), Vector2(0.97, 0.8), Vector2(0.02, 0.8)]
+	for index in [0, 1, 2, 0, 2, 3]:
+		surface.set_uv(uvs[index])
+		surface.add_vertex(transform * corners[index])
 
 ## Verstreute Felsbrocken (rein dekorativ)
 func _build_boulders() -> void:

@@ -23,6 +23,7 @@ func _ready() -> void:
 	add_to_group("tributes")
 	add_to_group("player")
 	tribute_name = GameManager.PLAYER_NAME
+	setup_body(Color(0.16, 0.22, 0.38))  # dunkles D12-Blau
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _unhandled_input(event: InputEvent) -> void:
