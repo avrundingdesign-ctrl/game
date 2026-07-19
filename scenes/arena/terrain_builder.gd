@@ -47,7 +47,7 @@ func build() -> void:
 			var x := -half + xi * step
 			var z := -half + zi * step
 			var y := get_height(x, z)
-			surface.set_color(_vertex_color(x, z, y))
+			surface.set_color(_blend_weights(x, z, y))
 			surface.set_uv(Vector2(x, z) * 0.1)
 			surface.add_vertex(Vector3(x, y, z))
 
@@ -64,34 +64,40 @@ func build() -> void:
 	surface.generate_normals()
 	var mesh_instance := MeshInstance3D.new()
 	mesh_instance.mesh = surface.commit()
-	var material := StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.roughness = 0.95
-	mesh_instance.material_override = material
+	mesh_instance.material_override = _make_splat_material()
 	add_child(mesh_instance)
 
 	_build_collision()
 
-func _vertex_color(x: float, z: float, y: float) -> Color:
-	var grass := Color(0.24, 0.36, 0.16)
-	var grass_dry := Color(0.38, 0.38, 0.18)
-	var dirt := Color(0.32, 0.26, 0.18)
-	var sand := Color(0.62, 0.55, 0.38)
-	var rock := Color(0.42, 0.4, 0.38)
+func _make_splat_material() -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = preload("res://shaders/terrain.gdshader")
+	var layers := {
+		"dirt": "Ground023", "grass": "Grass001", "forest": "Ground037",
+		"rock": "Rock030", "sand": "Ground054",
+	}
+	for layer in layers:
+		var id: String = layers[layer]
+		material.set_shader_parameter("%s_albedo" % layer,
+			load("res://assets/textures/%s/%s_1K-JPG_Color.jpg" % [id, id]))
+		material.set_shader_parameter("%s_normal" % layer,
+			load("res://assets/textures/%s/%s_1K-JPG_NormalGL.jpg" % [id, id]))
+	return material
 
-	# Sand an Wasserraendern
+## Weiche Splat-Gewichte: R = Erde (Plateau), G = Gras/Wald, B = Fels, A = Sand
+func _blend_weights(x: float, z: float, y: float) -> Color:
+	var sand := 0.0
 	for spot in water_spots:
 		var spot_distance: float = Vector2(x - spot[0].x, z - spot[0].z).length()
-		if spot_distance < spot[1] + 10.0:
-			return sand
-	# Fels in der Hoehe, Erde im Zentrum, sonst Grasvariation
-	if y > 6.0:
-		return rock
+		var spot_radius: float = spot[1]
+		sand = maxf(sand, 1.0 - clampf((spot_distance - spot_radius - 4.0) / 8.0, 0.0, 1.0))
+	var rock := clampf((y - 4.5) / 2.5, 0.0, 1.0)
 	var center_distance := Vector2(x, z).length()
-	if center_distance < PLATEAU_RADIUS:
-		return dirt
-	var variation := (detail_noise.get_noise_2d(x * 0.3, z * 0.3) + 1.0) / 2.0
-	return grass.lerp(grass_dry, variation * 0.6)
+	var dirt := 1.0 - clampf((center_distance - PLATEAU_RADIUS) / 18.0, 0.0, 1.0)
+	dirt *= 1.0 - sand
+	rock *= 1.0 - sand
+	var grass := maxf(0.0, 1.0 - dirt - rock - sand)
+	return Color(dirt, grass, rock, sand)
 
 func _build_collision() -> void:
 	var shape := HeightMapShape3D.new()

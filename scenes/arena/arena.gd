@@ -27,6 +27,10 @@ var rng := RandomNumberGenerator.new()
 var terrain: TerrainBuilder
 var _tree_positions: Array[Vector3] = []
 var _rain: GPUParticles3D
+var _bark_material: StandardMaterial3D
+var _needle_material: StandardMaterial3D
+var _orbit_camera: Camera3D
+var _orbit_angle := 0.0
 
 @onready var hud: CanvasLayer = $HUD
 
@@ -35,6 +39,7 @@ func _ready() -> void:
 	Gamemaker.reset()
 	SponsorSystem.reset()
 	rng.randomize()
+	_gild_cornucopia()
 	_build_terrain()
 	_build_lake()
 	_build_ponds()
@@ -47,6 +52,11 @@ func _ready() -> void:
 	Gamemaker.wildfire_started.connect(_on_wildfire_started)
 	Gamemaker.mutts_released.connect(_on_mutts_released)
 	_build_rain()
+	if OS.get_environment("PANEM_CAMERA") == "1":
+		_orbit_camera = Camera3D.new()
+		_orbit_camera.fov = 60
+		add_child(_orbit_camera)
+		_orbit_camera.make_current()
 	WeatherSystem.weather_changed.connect(func(w: int) -> void:
 		_rain.emitting = w == WeatherSystem.Weather.REGEN)
 	print("[Arena] Aufbau fertig: %d Tribute, %d Pickups, Seed %d" % [
@@ -55,6 +65,14 @@ func _ready() -> void:
 		rng.seed])
 
 func _physics_process(_delta: float) -> void:
+	# Kino-Orbit (PANEM_CAMERA=1): langsame Kreisfahrt ueber der Arena
+	if _orbit_camera != null:
+		_orbit_angle += 0.1 * _delta
+		var camera_position := Vector3(cos(_orbit_angle) * 55.0, 14.0, sin(_orbit_angle) * 55.0)
+		camera_position.y = ground_y(camera_position.x, camera_position.z) + 12.0
+		_orbit_camera.global_position = camera_position
+		_orbit_camera.look_at(Vector3(0, 6, 0), Vector3.UP)
+
 	# Regen folgt dem Spieler
 	if _rain != null and _rain.emitting:
 		var player := get_tree().get_first_node_in_group("player") as Node3D
@@ -99,6 +117,21 @@ func _build_rain() -> void:
 	_rain.draw_pass_1 = drop
 	_rain.emitting = false
 	add_child(_rain)
+
+## Fuellhorn: echtes Goldmetall (Metal032, gold getoent)
+func _gild_cornucopia() -> void:
+	var horn := $Cornucopia as MeshInstance3D
+	var material := StandardMaterial3D.new()
+	material.albedo_texture = load("res://assets/textures/Metal032/Metal032_1K-JPG_Color.jpg")
+	material.albedo_color = Color(1.0, 0.8, 0.4)
+	material.metallic = 1.0
+	material.metallic_texture = load("res://assets/textures/Metal032/Metal032_1K-JPG_Metalness.jpg")
+	material.roughness = 1.0
+	material.roughness_texture = load("res://assets/textures/Metal032/Metal032_1K-JPG_Roughness.jpg")
+	material.normal_enabled = true
+	material.normal_texture = load("res://assets/textures/Metal032/Metal032_1K-JPG_NormalGL.jpg")
+	material.uv1_scale = Vector3(3.0, 2.0, 1.0)
+	horn.material_override = material
 
 func _build_terrain() -> void:
 	terrain = TerrainBuilder.new()
@@ -232,6 +265,20 @@ func _is_near_water(at: Vector3, margin: float) -> bool:
 	return false
 
 func _build_forest() -> void:
+	# Rinde (Bark012) fuer Staemme, getoentes Triplanar-Gras als Nadelstruktur
+	_bark_material = StandardMaterial3D.new()
+	_bark_material.albedo_texture = load("res://assets/textures/Bark012/Bark012_1K-JPG_Color.jpg")
+	_bark_material.normal_enabled = true
+	_bark_material.normal_texture = load("res://assets/textures/Bark012/Bark012_1K-JPG_NormalGL.jpg")
+	_bark_material.uv1_scale = Vector3(2.0, 2.0, 1.0)
+	_bark_material.roughness = 0.95
+
+	_needle_material = StandardMaterial3D.new()
+	_needle_material.albedo_texture = load("res://assets/textures/Grass001/Grass001_1K-JPG_Color.jpg")
+	_needle_material.uv1_triplanar = true
+	_needle_material.uv1_scale = Vector3(1.6, 1.6, 1.6)
+	_needle_material.roughness = 1.0
+
 	var trunk_mesh := CylinderMesh.new()
 	trunk_mesh.top_radius = 0.22
 	trunk_mesh.bottom_radius = 0.32
@@ -263,17 +310,15 @@ func _build_forest() -> void:
 		var tree_scale := rng.randf_range(0.8, 1.5)
 		tree.scale = Vector3.ONE * tree_scale
 
-		var trunk_material := StandardMaterial3D.new()
-		trunk_material.albedo_color = Color(0.32, 0.24, 0.15).lerp(Color(0.42, 0.32, 0.2), rng.randf())
 		var trunk := MeshInstance3D.new()
 		trunk.mesh = trunk_mesh
-		trunk.material_override = trunk_material
+		trunk.material_override = _bark_material
 		trunk.position.y = 2.0
 		tree.add_child(trunk)
 
-		# Krone aus 3 gestapelten Kegeln mit Farbvariation
-		var crown_material := StandardMaterial3D.new()
-		crown_material.albedo_color = Color(0.1, 0.28, 0.1).lerp(Color(0.22, 0.4, 0.14), rng.randf())
+		# Krone aus 3 gestapelten Kegeln, Nadel-Struktur per Triplanar-Gras
+		var crown_material := _needle_material.duplicate()
+		crown_material.albedo_color = Color(0.28, 0.5, 0.28).lerp(Color(0.5, 0.75, 0.4), rng.randf())
 		var crown_y := 4.2
 		for crown_mesh in crown_meshes:
 			var crown := MeshInstance3D.new()
@@ -293,7 +338,36 @@ func _build_forest() -> void:
 
 	_spawn_wasp_nests()
 	_build_grass()
+	_build_boulders()
 	_spawn_wildlife()
+
+## Verstreute Felsbrocken (rein dekorativ)
+func _build_boulders() -> void:
+	var rock_material := StandardMaterial3D.new()
+	rock_material.albedo_texture = load("res://assets/textures/Rock030/Rock030_1K-JPG_Color.jpg")
+	rock_material.normal_enabled = true
+	rock_material.normal_texture = load("res://assets/textures/Rock030/Rock030_1K-JPG_NormalGL.jpg")
+	rock_material.uv1_triplanar = true
+	rock_material.uv1_scale = Vector3(0.5, 0.5, 0.5)
+	rock_material.roughness = 0.9
+
+	for i in 45:
+		var angle := rng.randf() * TAU
+		var radius := rng.randf_range(55.0, ARENA_RADIUS - 8.0)
+		var at := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+		if _is_near_water(at, 4.0):
+			continue
+		var boulder := MeshInstance3D.new()
+		var mesh := SphereMesh.new()
+		mesh.radius = 1.0
+		mesh.height = 1.6
+		boulder.mesh = mesh
+		boulder.material_override = rock_material
+		var boulder_scale := rng.randf_range(0.5, 2.6)
+		boulder.scale = Vector3(boulder_scale, boulder_scale * rng.randf_range(0.5, 0.8), boulder_scale * rng.randf_range(0.7, 1.2))
+		boulder.rotation.y = rng.randf() * TAU
+		boulder.position = Vector3(at.x, ground_y(at.x, at.z) - 0.3 * boulder_scale, at.z)
+		add_child(boulder)
 
 ## Kaninchen im Wald — Jagdbeute (rohes Fleisch, am Feuer braten)
 func _spawn_wildlife() -> void:
@@ -314,6 +388,8 @@ func _build_grass() -> void:
 	blade.center_offset = Vector3(0, 0.3, 0)
 	var material := ShaderMaterial.new()
 	material.shader = preload("res://shaders/grass.gdshader")
+	material.set_shader_parameter("blade_texture",
+		load("res://assets/textures/Grass001/Grass001_1K-JPG_Color.jpg"))
 	blade.material = material
 
 	var multimesh := MultiMesh.new()

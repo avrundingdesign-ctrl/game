@@ -7,7 +7,7 @@ signal time_changed(hour: float)
 ## Ein Arena-Tag in Echtzeit-Sekunden (Design: 8-12 Minuten).
 @export var day_length_seconds := 600.0
 
-var hour := 8.0  # Start am Morgen
+var hour := 9.5  # Start am Vormittag
 var _was_day := true
 
 func _ready() -> void:
@@ -35,7 +35,7 @@ func _update_sun() -> void:
 		sun.rotation_degrees.x = -lerp(0.0, 180.0, clamp(t, 0.0, 1.0))
 		sun.visible = t > 0.01 and t < 0.99
 		var elevation := sin(clamp(t, 0.0, 1.0) * PI)
-		sun.light_energy = clamp(elevation * 1.4, 0.05, 1.4)
+		sun.light_energy = clamp(elevation * 1.9, 0.05, 1.9)
 		# Warmes Licht bei Sonnenauf-/untergang
 		sun.light_color = Color(1.0, 0.55, 0.3).lerp(Color(1.0, 0.98, 0.92), clampf(elevation * 1.6, 0.0, 1.0))
 

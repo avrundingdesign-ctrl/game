@@ -3,10 +3,12 @@
 [ext_resource type="Script" path="res://scenes/arena/arena.gd" id="1_arena"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="2_hud"]
 
-[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
-sky_top_color = Color(0.35, 0.46, 0.72, 1)
-sky_horizon_color = Color(0.64, 0.65, 0.67, 1)
-ground_horizon_color = Color(0.64, 0.65, 0.67, 1)
+[sub_resource type="PhysicalSkyMaterial" id="sky_mat"]
+rayleigh_coefficient = 2.5
+mie_coefficient = 0.005
+turbidity = 12.0
+ground_color = Color(0.22, 0.19, 0.14, 1)
+energy_multiplier = 1.6
 
 [sub_resource type="Sky" id="sky"]
 sky_material = SubResource("sky_mat")
@@ -15,6 +17,7 @@ sky_material = SubResource("sky_mat")
 background_mode = 2
 sky = SubResource("sky")
 tonemap_mode = 3
+tonemap_exposure = 1.35
 sdfgi_enabled = true
 glow_enabled = true
 glow_intensity = 0.3

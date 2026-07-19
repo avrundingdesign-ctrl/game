@@ -3,8 +3,9 @@ render_mode cull_disabled, depth_prepass_alpha;
 
 // Grasbueschel: Wind-Schwanken oben, unten verankert; leichte Farbvariation.
 
-uniform vec3 base_color: source_color = vec3(0.2, 0.34, 0.12);
-uniform vec3 tip_color: source_color = vec3(0.42, 0.52, 0.2);
+uniform sampler2D blade_texture: source_color, filter_linear_mipmap;
+uniform vec3 base_color: source_color = vec3(0.55, 0.65, 0.45);
+uniform vec3 tip_color: source_color = vec3(1.0, 1.05, 0.85);
 uniform float sway_strength = 0.25;
 uniform float sway_speed = 1.6;
 
@@ -19,6 +20,7 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = mix(base_color, tip_color, height_factor);
-	ROUGHNESS = 0.9;
+	vec3 blade = texture(blade_texture, UV).rgb;
+	ALBEDO = blade * mix(base_color, tip_color, height_factor);
+	ROUGHNESS = 0.95;
 }
