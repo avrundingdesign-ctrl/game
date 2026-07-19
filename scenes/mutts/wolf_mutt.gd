@@ -13,6 +13,7 @@ var health := 60.0
 var _bite_cooldown := 0.0
 var _target: TributeBase = null
 var _retarget_timer := 0.0
+var _growl_timer := 2.0
 
 static func create(at: Vector3, dead_district: int) -> WolfMutt:
 	var mutt := WolfMutt.new()
@@ -63,6 +64,10 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 	_bite_cooldown = maxf(0.0, _bite_cooldown - delta)
+	_growl_timer -= delta
+	if _growl_timer <= 0.0:
+		_growl_timer = randf_range(2.5, 5.0)
+		AudioDirector.play_near("knurren", global_position, -6.0)
 
 	_retarget_timer -= delta
 	if _retarget_timer <= 0.0 or _target == null or not is_instance_valid(_target) or not _target.alive:

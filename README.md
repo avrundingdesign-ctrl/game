@@ -53,6 +53,7 @@ Ein 3D-Survival-Battle-Royale nach Vorbild der 74. Hungerspiele — gebaut mit *
 - [x] Phase 4 — Grafik-Pass (prozedurales Terrain, Shader, Partikel, Tag/Nacht-Licht)
 - [x] Phase 5 — Inhalt & Polish (Hauptmenü, Karriero-Verrat, Statistik, Balancing)
 - [x] Polish-Runde — Jagd + Braten, Tribut-Vorstellung im Countdown, prozeduraler Sound (Kanone, Bogen, Spotttölpel-Motiv, Wind)
-- [ ] Offen: Reaping-Zeremonie, Zwei-Sieger-Modus, Audio-Ausbau mit echten Samples
+- [x] Finale Runde — Reaping-Zeremonie als Vorspann, Zwei-Sieger-Regel (Distrikt-Koop mit Doppelsieg), Hymne + Gong + Fanfaren + Mutt-Knurren
+- [ ] Offen: Audio mit echten Samples, Mehrspieler (langfristig)
 
 *Hinweis: „Die Tribute von Panem" ist geschützte IP von Suzanne Collins/Lionsgate. Dieses Fanprojekt ist nicht kommerziell.*

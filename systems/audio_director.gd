@@ -16,6 +16,12 @@ func _ready() -> void:
 	_sounds["treffer"] = _make_hit()
 	_sounds["spottoelpel"] = _make_mockingjay()
 	_sounds["fallschirm"] = _make_chime()
+	_sounds["hymne"] = _make_anthem()
+	_sounds["beep"] = _make_beep()
+	_sounds["gong"] = _make_gong()
+	_sounds["knurren"] = _make_growl()
+	_sounds["sieg"] = _make_victory()
+	_sounds["niederlage"] = _make_defeat()
 
 	for i in 6:
 		var player := AudioStreamPlayer.new()
@@ -33,9 +39,17 @@ func _ready() -> void:
 	GameManager.tribute_died.connect(func(_n: String, _d: int, _k: String) -> void:
 		play("kanone", -4.0))
 	GameManager.fallen_projection.connect(func(_fallen: Array) -> void:
-		play("spottoelpel", -8.0))
+		play("hymne", -8.0))
 	SponsorSystem.gift_incoming.connect(func() -> void:
 		play("fallschirm", -8.0))
+	GameManager.countdown_tick.connect(func(left: int) -> void:
+		if left <= 10 and left > 0:
+			play("beep", -12.0))
+	GameManager.phase_changed.connect(func(new_phase: GameManager.Phase) -> void:
+		if new_phase == GameManager.Phase.BLOODBATH:
+			play("gong", -4.0))
+	GameManager.game_ended.connect(func(victory: bool, _stats: Dictionary) -> void:
+		play("sieg" if victory else "niederlage", -6.0))
 
 func _process(delta: float) -> void:
 	# Tagsueber gelegentlich ein ferner Spotttoelpel
@@ -142,6 +156,84 @@ func _make_chime() -> AudioStreamWAV:
 		for i in buffer.size() - start:
 			var t := float(i) / SAMPLE_RATE
 			buffer[start + i] += sin(TAU * notes[n] * t) * exp(-4.0 * t) * 0.3
+	return _make_wav(buffer)
+
+## Feierliche Panem-Hymne (kurze Fanfare zur Himmelsprojektion)
+func _make_anthem() -> AudioStreamWAV:
+	var notes := [261.6, 329.6, 392.0, 523.3, 392.0, 523.3]  # C4 E4 G4 C5 G4 C5
+	var lengths := [0.4, 0.4, 0.4, 0.7, 0.4, 1.1]
+	var total := 0.0
+	for length in lengths:
+		total += length
+	var buffer := _samples(total + 0.5)
+	var start_time := 0.0
+	for n in notes.size():
+		var start := int(start_time * SAMPLE_RATE)
+		var sustain: float = lengths[n] + 0.4
+		for i in int(sustain * SAMPLE_RATE):
+			var t := float(i) / SAMPLE_RATE
+			var envelope := minf(t * 30.0, 1.0) * exp(-2.2 * t)
+			var index := start + i
+			if index < buffer.size():
+				# Blechblaeser-Anmutung: Grundton + Oktave + Quinte obendrauf
+				buffer[index] += (sin(TAU * notes[n] * t) * 0.4 \
+					+ sin(TAU * notes[n] * 2.0 * t) * 0.15 \
+					+ sin(TAU * notes[n] * 3.0 * t) * 0.08) * envelope
+		start_time += lengths[n]
+	return _make_wav(buffer)
+
+func _make_beep() -> AudioStreamWAV:
+	var buffer := _samples(0.09)
+	for i in buffer.size():
+		var t := float(i) / SAMPLE_RATE
+		buffer[i] = sin(TAU * 880.0 * t) * minf(t * 60.0, 1.0) * exp(-18.0 * t) * 0.5
+	return _make_wav(buffer)
+
+## Tiefer Gong zum Start des Blutbads
+func _make_gong() -> AudioStreamWAV:
+	var buffer := _samples(2.0)
+	for i in buffer.size():
+		var t := float(i) / SAMPLE_RATE
+		buffer[i] = (sin(TAU * 165.0 * t) * 0.5 + sin(TAU * 220.7 * t) * 0.3 \
+			+ sin(TAU * 329.0 * t) * 0.15) * exp(-1.8 * t)
+	return _make_wav(buffer)
+
+## Wolfsmutt-Knurren
+func _make_growl() -> AudioStreamWAV:
+	var buffer := _samples(0.6)
+	for i in buffer.size():
+		var t := float(i) / SAMPLE_RATE
+		var rasp := 1.0 + 0.5 * sin(TAU * 28.0 * t)
+		buffer[i] = (fmod(t * 82.0, 1.0) * 2.0 - 1.0) * 0.35 * rasp * minf(t * 12.0, 1.0) * exp(-2.5 * t) \
+			+ (_rng.randf() * 2.0 - 1.0) * 0.1 * exp(-3.0 * t)
+	return _make_wav(buffer)
+
+## Sieg-Fanfare (aufsteigend, hell)
+func _make_victory() -> AudioStreamWAV:
+	var notes := [392.0, 523.3, 659.3, 784.0]  # G4 C5 E5 G5
+	var buffer := _samples(2.6)
+	for n in notes.size():
+		var start := int(n * 0.28 * SAMPLE_RATE)
+		var sustain := 0.5 if n < notes.size() - 1 else 1.4
+		for i in int(sustain * SAMPLE_RATE):
+			var t := float(i) / SAMPLE_RATE
+			var index := start + i
+			if index < buffer.size():
+				buffer[index] += (sin(TAU * notes[n] * t) * 0.35 \
+					+ sin(TAU * notes[n] * 2.0 * t) * 0.12) * minf(t * 40.0, 1.0) * exp(-2.0 * t)
+	return _make_wav(buffer)
+
+## Niederlage (fallende Moll-Linie, dunkel)
+func _make_defeat() -> AudioStreamWAV:
+	var notes := [220.0, 174.6, 146.8]  # A3 F3 D3
+	var buffer := _samples(2.8)
+	for n in notes.size():
+		var start := int(n * 0.55 * SAMPLE_RATE)
+		for i in int(1.4 * SAMPLE_RATE):
+			var t := float(i) / SAMPLE_RATE
+			var index := start + i
+			if index < buffer.size():
+				buffer[index] += sin(TAU * notes[n] * t) * 0.4 * minf(t * 15.0, 1.0) * exp(-1.6 * t)
 	return _make_wav(buffer)
 
 ## Leises Windrauschen (geloopt)

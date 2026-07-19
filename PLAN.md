@@ -46,8 +46,8 @@ Details zum Spieldesign: siehe [GAME_DESIGN.md](GAME_DESIGN.md).
 - [x] Vegetation: variantenreiche Bäume, 9000 Gras-Büschel mit Wind-Shader
 - [x] Wasser-Shader (See + Teiche), Regen-/Glut-/Funken-/Rauch-Partikel
 - [x] Tag/Nacht-Lichtstimmung: warme Dämmerung, Mondlicht
-- [x] Audio (prozedural synthetisiert, keine Assets): Kanone, Bogen, Treffer, Spotttölpel-Motiv (4 Noten), Sponsoren-Glocke, Wind-Ambience
-- [ ] Audio-Ausbau: echte Samples, 3D-Positional, Hymne → offen
+- [x] Audio (prozedural synthetisiert, keine Assets): Kanone, Bogen, Treffer, Spotttölpel-Motiv (4 Noten), Sponsoren-Glocke, Wind-Ambience, Hymne, Gong, Fanfaren
+- [ ] Audio mit echten Samples + 3D-Positional → langfristig offen
 
 ## Phase 5 — Inhalt & Polish (M5) ✅ (Kern)
 - [x] 24 Tribut-Profile mit Distrikt-Archetypen (data/tributes.json)
@@ -57,8 +57,9 @@ Details zum Spieldesign: siehe [GAME_DESIGN.md](GAME_DESIGN.md).
 - [x] Tribut-Vorstellung während des Countdowns (alle 24 mit Distrikt, „DU"-Markierung)
 - [x] Jagd: Kaninchen im Wald (fliehen, per Pfeil/Nahkampf erlegbar) → rohes Fleisch
 - [x] Essen braten am Lagerfeuer ([E] am Feuer: rohes Fleisch → Braten, 55 Sättigung)
-- [ ] Reaping-Intro als eigener Vorspann (Auslosungs-Zeremonie) → offen
-- [ ] Zwei-Sieger-Modus (Koop mit KI-Partner) → offen
+- [x] Reaping-Zeremonie als Vorspann (Distrikt-Montage, Ziehung D12, überspringbar)
+- [x] Zwei-Sieger-Regel: Regeländerungs-Ansage ab 10 Überlebenden, Distrikt-Partner schonen sich, Doppelsieg-Screen
+- [x] Audio-Ausbau: Panem-Hymne (Himmelsprojektion), Countdown-Beeps, Blutbad-Gong, Wolfsmutt-Knurren, Sieg-/Niederlage-Fanfare
 
 ## Arbeitsweise
 - Nach jeder abgeschlossenen Phase (und bei größeren Zwischenständen): Commit + Push.
