@@ -215,6 +215,7 @@ func try_melee_attack(target: TributeBase) -> bool:
 		return false
 	_melee_cooldown = MELEE_COOLDOWN
 	target.take_damage(melee_damage(), tribute_name)
+	AudioDirector.play_near("treffer", target.global_position, -8.0)
 	# Waffentreffer koennen blutende Wunden reissen
 	if not equipped_weapon().is_empty() and randf() < 0.35:
 		target.bleeding_seconds = maxf(target.bleeding_seconds, 20.0)
@@ -232,6 +233,7 @@ func try_shoot_arrow(from: Vector3, direction: Vector3) -> bool:
 	_melee_cooldown = 1.0
 	var arrow := Arrow.shoot(from, direction, self, weapon.damage)
 	get_parent().add_child(arrow)
+	AudioDirector.play_near("bogen", global_position, -10.0)
 	return true
 
 ## Waehlt das Item mit der gegebenen ID in den aktiven Slot. true bei Erfolg.

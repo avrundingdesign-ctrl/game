@@ -46,15 +46,18 @@ Details zum Spieldesign: siehe [GAME_DESIGN.md](GAME_DESIGN.md).
 - [x] Vegetation: variantenreiche Bäume, 9000 Gras-Büschel mit Wind-Shader
 - [x] Wasser-Shader (See + Teiche), Regen-/Glut-/Funken-/Rauch-Partikel
 - [x] Tag/Nacht-Lichtstimmung: warme Dämmerung, Mondlicht
-- [ ] Audio: Ambience, 3D-Sounds, Hymne, Kanone (braucht Sound-Assets → offen)
+- [x] Audio (prozedural synthetisiert, keine Assets): Kanone, Bogen, Treffer, Spotttölpel-Motiv (4 Noten), Sponsoren-Glocke, Wind-Ambience
+- [ ] Audio-Ausbau: echte Samples, 3D-Positional, Hymne → offen
 
 ## Phase 5 — Inhalt & Polish (M5) ✅ (Kern)
 - [x] 24 Tribut-Profile mit Distrikt-Archetypen (data/tributes.json)
 - [x] Karriero-Rudel + Verrat im Endgame (ab 8 Überlebenden bricht die Allianz)
 - [x] Hauptmenü (Start, Steuerung, Beenden), Statistik im Game-Over (Tage/Kills/Rating)
 - [x] Balancing: Wespennester 6→4, KI-Nachtfeuer, Wachposten-Vorräte, Todes-Kamera-Fix
-- [ ] Reaping-Intro (Distrikt-Auslosung als Vorspann) → offen
-- [ ] Essen braten am Lagerfeuer → offen
+- [x] Tribut-Vorstellung während des Countdowns (alle 24 mit Distrikt, „DU"-Markierung)
+- [x] Jagd: Kaninchen im Wald (fliehen, per Pfeil/Nahkampf erlegbar) → rohes Fleisch
+- [x] Essen braten am Lagerfeuer ([E] am Feuer: rohes Fleisch → Braten, 55 Sättigung)
+- [ ] Reaping-Intro als eigener Vorspann (Auslosungs-Zeremonie) → offen
 - [ ] Zwei-Sieger-Modus (Koop mit KI-Partner) → offen
 
 ## Arbeitsweise

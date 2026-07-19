@@ -18,6 +18,7 @@ LootTables="*res://systems/loot_tables.gd"
 WeatherSystem="*res://systems/weather_system.gd"
 Gamemaker="*res://systems/gamemaker.gd"
 SponsorSystem="*res://systems/sponsor_system.gd"
+AudioDirector="*res://systems/audio_director.gd"
 
 [display]
 

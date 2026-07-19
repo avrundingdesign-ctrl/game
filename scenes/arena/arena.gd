@@ -118,6 +118,7 @@ func _spawn_pedestals_and_tributes() -> void:
 	var data: Dictionary = JSON.parse_string(file.get_as_text())
 	var tributes: Array = data.tributes
 	GameManager.register_tributes(tributes.size())
+	hud.show_roster(tributes)
 
 	var player_index := -1
 	for i in tributes.size():
@@ -292,6 +293,19 @@ func _build_forest() -> void:
 
 	_spawn_wasp_nests()
 	_build_grass()
+	_spawn_wildlife()
+
+## Kaninchen im Wald — Jagdbeute (rohes Fleisch, am Feuer braten)
+func _spawn_wildlife() -> void:
+	for i in 18:
+		var angle := rng.randf() * TAU
+		var radius := rng.randf_range(70.0, 210.0)
+		var at := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+		if _is_near_water(at, 3.0):
+			continue
+		var rabbit := Rabbit.new()
+		rabbit.position = Vector3(at.x, ground_y(at.x, at.z) + 0.3, at.z)
+		add_child(rabbit)
 
 ## Grasbueschel als MultiMesh (gekreuzte Quads mit Wind-Shader)
 func _build_grass() -> void:

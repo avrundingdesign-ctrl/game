@@ -59,11 +59,12 @@ func _physics_process(delta: float) -> void:
 	var collider: Object = hit.collider
 	if collider is TributeBase and collider.alive:
 		collider.take_damage(damage, shooter.tribute_name if shooter != null else "Pfeil")
+		AudioDirector.play_near("treffer", global_position, -8.0)
 		if randf() < 0.5:
 			collider.bleeding_seconds = maxf(collider.bleeding_seconds, 20.0)
 		queue_free()
 		return
-	if collider is WolfMutt:
+	if collider is WolfMutt or collider is Rabbit:
 		collider.take_damage(damage, shooter.tribute_name if shooter != null else "Pfeil")
 		queue_free()
 		return

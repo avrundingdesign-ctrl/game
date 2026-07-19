@@ -16,6 +16,7 @@ var _fallen_label: Label
 var _bleed_label: Label
 var _venom_label: Label
 var _announce_label: Label
+var _roster_panel: PanelContainer
 var _game_over_rect: ColorRect
 var _game_over_title: Label
 var _game_over_stats: Label
@@ -182,6 +183,42 @@ func _label(parent: Control, font_size: int, color: Color) -> Label:
 	parent.add_child(label)
 	return label
 
+## Tribut-Vorstellung waehrend des Countdowns ("Reaping"-Ersatz)
+func show_roster(tributes: Array) -> void:
+	if _roster_panel != null:
+		_roster_panel.queue_free()
+	_roster_panel = PanelContainer.new()
+	_roster_panel.anchor_left = 0.5
+	_roster_panel.anchor_right = 0.5
+	_roster_panel.anchor_top = 0.5
+	_roster_panel.anchor_bottom = 0.5
+	_roster_panel.offset_left = -300
+	_roster_panel.offset_right = 300
+	_roster_panel.offset_top = -60
+	_roster_panel.offset_bottom = 320
+	get_child(0).add_child(_roster_panel)
+
+	var box := VBoxContainer.new()
+	_roster_panel.add_child(box)
+	var title := Label.new()
+	title.text = "— DIE TRIBUTE DER 74. SPIELE —"
+	title.add_theme_font_size_override("font_size", 22)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 30)
+	box.add_child(grid)
+	for profile in tributes:
+		var entry := Label.new()
+		var marker := "  ◄ DU" if profile.profil == "spieler" else ""
+		entry.text = "D%02d  %s%s" % [profile.district, profile.name, marker]
+		entry.add_theme_font_size_override("font_size", 14)
+		if profile.profil == "spieler":
+			entry.add_theme_color_override("font_color", Color(0.95, 0.8, 0.35))
+		grid.add_child(entry)
+
 func bind_player(bound: TributeBase) -> void:
 	player = bound
 	player.needs_changed.connect(_on_needs_changed)
@@ -216,6 +253,9 @@ func _on_announcement(text: String) -> void:
 func _on_phase_changed(new_phase: GameManager.Phase) -> void:
 	match new_phase:
 		GameManager.Phase.BLOODBATH:
+			if _roster_panel != null:
+				_roster_panel.queue_free()
+				_roster_panel = null
 			_countdown_label.text = "DIE SPIELE HABEN BEGONNEN!"
 			_countdown_label.add_theme_font_size_override("font_size", 36)
 			get_tree().create_timer(4.0).timeout.connect(func() -> void: _countdown_label.text = "")

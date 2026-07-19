@@ -14,6 +14,7 @@ const INTERACT_RANGE := 2.5
 var _nearby_pickup: LootPickup = null
 var _nearby_bush: BerryBush = null
 var _can_drink := false
+var _can_roast := false
 
 func _ready() -> void:
 	add_to_group("tributes")
@@ -79,6 +80,13 @@ func _update_interact_hint() -> void:
 	_nearby_pickup = null
 	_nearby_bush = null
 	_can_drink = false
+	_can_roast = false
+
+	if _raw_meat_index() >= 0:
+		for fire in get_tree().get_nodes_in_group("campfires"):
+			if global_position.distance_to(fire.global_position) < 3.0:
+				_can_roast = true
+				break
 
 	for lake in get_tree().get_nodes_in_group("lake"):
 		var lake_radius: float = lake.get_meta("radius", 25.0)
@@ -101,6 +109,8 @@ func _update_interact_hint() -> void:
 
 	if _nearby_pickup != null:
 		interact_hint_changed.emit("[E] %s aufheben" % _nearby_pickup.item.name)
+	elif _can_roast:
+		interact_hint_changed.emit("[E] Fleisch braten")
 	elif _nearby_bush != null:
 		interact_hint_changed.emit("[E] Beeren pfluecken")
 	elif _can_drink:
@@ -108,10 +118,21 @@ func _update_interact_hint() -> void:
 	else:
 		interact_hint_changed.emit("")
 
+func _raw_meat_index() -> int:
+	for i in inventory.size():
+		if inventory[i].get("bratbar", false):
+			return i
+	return -1
+
 func _interact() -> void:
 	if _nearby_pickup != null:
 		if not _nearby_pickup.try_take(self):
 			interact_hint_changed.emit("Inventar voll!")
+	elif _can_roast:
+		var index := _raw_meat_index()
+		if index >= 0:
+			inventory[index] = LootTables.get_item("braten")
+			inventory_changed.emit(inventory, selected_slot)
 	elif _nearby_bush != null:
 		var berries: Dictionary = _nearby_bush.pick(self)
 		if not berries.is_empty() and not add_item(berries):
@@ -151,11 +172,12 @@ func _attack() -> void:
 			continue  # nicht im Blickfeld
 		try_melee_attack(other)
 		return
-	# Wolfsmutts im Nahkampf treffen
+	# Wolfsmutts und Wild im Nahkampf treffen
 	if _melee_cooldown <= 0.0:
-		for mutt in get_tree().get_nodes_in_group("mutts"):
-			var to_mutt: Vector3 = mutt.global_position - global_position
-			if to_mutt.length() <= MELEE_RANGE + 0.3 and forward.dot(to_mutt.normalized()) >= 0.3:
-				_melee_cooldown = MELEE_COOLDOWN
-				mutt.take_damage(melee_damage(), tribute_name)
-				return
+		for group in ["mutts", "wildlife"]:
+			for target in get_tree().get_nodes_in_group(group):
+				var to_target: Vector3 = target.global_position - global_position
+				if to_target.length() <= MELEE_RANGE + 0.3 and forward.dot(to_target.normalized()) >= 0.3:
+					_melee_cooldown = MELEE_COOLDOWN
+					target.take_damage(melee_damage(), tribute_name)
+					return

@@ -34,6 +34,7 @@ Ein 3D-Survival-Battle-Royale nach Vorbild der 74. Hungerspiele — gebaut mit *
 - **Bogen** ausrüsten + Pfeile im Gepäck = Fernkampf; verschossene Pfeile stecken im Boden und sind bergbar.
 - Waffentreffer können **Blutungen** verursachen — nur Verband/Medizin stoppt sie.
 - **Beeren** an Sträuchern pflücken — aber 15 % sind Nachtschatten (tödlich!). Hohe Überlebens-Werte erkennen die Gefahr.
+- **Jagen:** Kaninchen mit Bogen oder Klinge erlegen → rohes Fleisch → am Lagerfeuer **braten** ([E] am Feuer) für die beste Mahlzeit im Spiel.
 - In tiefer Nacht (23–5 Uhr) droht **Kälteschaden** — Schlafsack oder Lagerfeuer (F platzieren) schützt. Aber: Feuerschein lockt Jäger an.
 - Abends zeigt der Himmel die Gefallenen des Tages.
 - Sieg: Als letzte:r übrig bleiben.
@@ -50,6 +51,8 @@ Ein 3D-Survival-Battle-Royale nach Vorbild der 74. Hungerspiele — gebaut mit *
 - [x] Phase 2 — Survival Slice (Bogen, Blutungen, KI-Sinne, Beeren/Nachtschatten, Lagerfeuer, Nachtkälte)
 - [x] Phase 3 — Gamemaker-Regie (Wetter, Waldbrand, Jägerwespen, Feast, Wolfsmutt-Finale, Sponsoren)
 - [x] Phase 4 — Grafik-Pass (prozedurales Terrain, Shader, Partikel, Tag/Nacht-Licht)
-- [x] Phase 5 — Inhalt & Polish (Hauptmenü, Karriero-Verrat, Statistik, Balancing) — offen: Audio, Reaping-Intro, Braten, Zwei-Sieger-Modus
+- [x] Phase 5 — Inhalt & Polish (Hauptmenü, Karriero-Verrat, Statistik, Balancing)
+- [x] Polish-Runde — Jagd + Braten, Tribut-Vorstellung im Countdown, prozeduraler Sound (Kanone, Bogen, Spotttölpel-Motiv, Wind)
+- [ ] Offen: Reaping-Zeremonie, Zwei-Sieger-Modus, Audio-Ausbau mit echten Samples
 
 *Hinweis: „Die Tribute von Panem" ist geschützte IP von Suzanne Collins/Lionsgate. Dieses Fanprojekt ist nicht kommerziell.*

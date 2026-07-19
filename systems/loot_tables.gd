@@ -27,9 +27,11 @@ const ITEMS := {
 	"seil": {"name": "Seil", "type": "ausruestung", "color": Color(0.7, 0.6, 0.4)},
 	"jod": {"name": "Jodflasche", "type": "ausruestung", "color": Color(0.5, 0.3, 0.5)},
 	"plane": {"name": "Plane", "type": "ausruestung", "color": Color(0.4, 0.45, 0.5)},
-	# --- Gesammeltes (nicht im Fuellhorn) ---
+	# --- Gesammeltes/Erjagtes (nicht im Fuellhorn) ---
 	"beeren": {"name": "Beeren", "type": "essen", "nutrition": 20.0, "color": Color(0.3, 0.15, 0.4)},
 	"nachtschatten": {"name": "Beeren", "type": "essen", "nutrition": 0.0, "giftig": true, "color": Color(0.3, 0.15, 0.4)},
+	"rohes_fleisch": {"name": "Rohes Fleisch", "type": "essen", "nutrition": 12.0, "bratbar": true, "color": Color(0.7, 0.3, 0.3)},
+	"braten": {"name": "Braten", "type": "essen", "nutrition": 55.0, "color": Color(0.55, 0.35, 0.15)},
 }
 
 ## Ring-Tabellen: Item-Pools und Anzahl der Spawns pro Partie.
