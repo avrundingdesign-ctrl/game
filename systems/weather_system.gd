@@ -68,12 +68,15 @@ func _apply_environment() -> void:
 	var env := env_node.environment
 	match weather:
 		Weather.NEBEL:
-			env.fog_enabled = true
-			env.fog_density = 0.03
+			env.fog_density = 0.02
 			env.fog_light_color = Color(0.75, 0.77, 0.8)
+			env.volumetric_fog_density = 0.04
 		Weather.REGEN:
-			env.fog_enabled = true
-			env.fog_density = 0.008
+			env.fog_density = 0.005
 			env.fog_light_color = Color(0.5, 0.55, 0.62)
+			env.volumetric_fog_density = 0.015
 		_:
-			env.fog_enabled = false
+			# Klar/Hitze: nur hauchzarter Distanz-Dunst (Tiefenwirkung)
+			env.fog_density = 0.0002
+			env.fog_light_color = Color(0.7, 0.75, 0.82)
+			env.volumetric_fog_density = 0.0

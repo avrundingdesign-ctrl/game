@@ -420,12 +420,14 @@ func _spawn_wildlife() -> void:
 ## Grasbueschel als MultiMesh (gekreuzte Quads mit Wind-Shader)
 func _build_grass() -> void:
 	var blade := QuadMesh.new()
-	blade.size = Vector2(0.5, 0.6)
-	blade.center_offset = Vector3(0, 0.3, 0)
+	blade.size = Vector2(0.85, 0.8)
+	blade.center_offset = Vector3(0, 0.4, 0)
 	var material := ShaderMaterial.new()
 	material.shader = preload("res://shaders/grass.gdshader")
 	material.set_shader_parameter("blade_texture",
-		load("res://assets/textures/Grass001/Grass001_1K-JPG_Color.jpg"))
+		load("res://assets/textures/Foliage002/Foliage002_1K-PNG_Color.png"))
+	material.set_shader_parameter("opacity_texture",
+		load("res://assets/textures/Foliage002/Foliage002_1K-PNG_Opacity.png"))
 	blade.material = material
 
 	var multimesh := MultiMesh.new()

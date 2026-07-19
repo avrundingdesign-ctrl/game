@@ -20,7 +20,11 @@ var _phase := 0.0
 
 func _ready() -> void:
 	_outfit_material.albedo_color = Color(0.4, 0.4, 0.45)
-	_outfit_material.roughness = 0.9
+	_outfit_material.albedo_texture = load("res://assets/textures/Fabric030/Fabric030_1K-PNG_Color.png")
+	_outfit_material.normal_enabled = true
+	_outfit_material.normal_texture = load("res://assets/textures/Fabric030/Fabric030_1K-PNG_NormalGL.png")
+	_outfit_material.uv1_scale = Vector3(2.5, 2.5, 1.0)
+	_outfit_material.roughness = 0.95
 	_skin_material.albedo_color = SKIN_TONES[randi() % SKIN_TONES.size()]
 	_skin_material.roughness = 0.7
 
