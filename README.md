@@ -5,6 +5,7 @@ Ein 3D-Survival-Battle-Royale nach Vorbild der 74. Hungerspiele — gebaut mit *
 24 Tribute, ein Füllhorn voller Loot, eine Arena mit Wald und See, Spielmacher, die das Wetter kontrollieren — und nur eine:r überlebt.
 
 ![Blutbad am Füllhorn](docs/screenshot_blutbad.png)
+![Die Ernte](docs/screenshot_reaping.png)
 ![Hauptmenü](docs/screenshot_menu.png)
 
 ## Spielen
