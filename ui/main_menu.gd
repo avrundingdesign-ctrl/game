@@ -45,7 +45,7 @@ func _ready() -> void:
 	start_button.text = "Die Spiele beginnen"
 	start_button.custom_minimum_size = Vector2(0, 48)
 	start_button.pressed.connect(func() -> void:
-		get_tree().change_scene_to_file("res://scenes/arena/arena.tscn"))
+		get_tree().change_scene_to_file("res://ui/reaping.tscn"))
 	box.add_child(start_button)
 
 	var controls := Label.new()
