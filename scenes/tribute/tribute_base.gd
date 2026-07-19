@@ -6,6 +6,7 @@ extends CharacterBody3D
 signal died(tribute: TributeBase, killer_name: String)
 signal needs_changed(health: float, thirst: float, hunger: float)
 signal inventory_changed(inventory: Array, selected_slot: int)
+signal damaged(amount: float)  # nur spuerbare Einzeltreffer, kein DoT-Ticken
 
 const MAX_SLOTS := 6
 const FIST_DAMAGE := 8.0
@@ -81,6 +82,8 @@ func take_damage(amount: float, source_name: String) -> void:
 		return
 	health -= amount
 	_last_attacker_name = source_name
+	if amount >= 2.0:
+		damaged.emit(amount)
 	needs_changed.emit(health, thirst, hunger)
 	if health <= 0.0:
 		die(source_name)

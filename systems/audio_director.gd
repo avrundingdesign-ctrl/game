@@ -7,6 +7,7 @@ const SAMPLE_RATE := 22050
 var _sounds := {}
 var _players: Array[AudioStreamPlayer] = []
 var _ambient_timer := 20.0
+var _heartbeat_timer := 0.0
 var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -22,6 +23,7 @@ func _ready() -> void:
 	_sounds["knurren"] = _make_growl()
 	_sounds["sieg"] = _make_victory()
 	_sounds["niederlage"] = _make_defeat()
+	_sounds["herzschlag"] = _make_heartbeat()
 
 	for i in 6:
 		var player := AudioStreamPlayer.new()
@@ -58,6 +60,14 @@ func _process(delta: float) -> void:
 		if _ambient_timer <= 0.0:
 			_ambient_timer = _rng.randf_range(35.0, 90.0)
 			play("spottoelpel", -20.0)
+
+	# Herzschlag bei kritischem Leben
+	var player := get_tree().get_first_node_in_group("player")
+	if player != null and "health" in player and player.alive and player.health < 25.0:
+		_heartbeat_timer -= delta
+		if _heartbeat_timer <= 0.0:
+			_heartbeat_timer = 1.1
+			play("herzschlag", -10.0)
 
 func play(sound: String, volume_db := -6.0) -> void:
 	for player in _players:
@@ -234,6 +244,18 @@ func _make_defeat() -> AudioStreamWAV:
 			var index := start + i
 			if index < buffer.size():
 				buffer[index] += sin(TAU * notes[n] * t) * 0.4 * minf(t * 15.0, 1.0) * exp(-1.6 * t)
+	return _make_wav(buffer)
+
+## Zwei dumpfe Herzschlaege
+func _make_heartbeat() -> AudioStreamWAV:
+	var buffer := _samples(0.5)
+	for thump_start in [0.0, 0.24]:
+		var start := int(thump_start * SAMPLE_RATE)
+		for i in int(0.14 * SAMPLE_RATE):
+			var t := float(i) / SAMPLE_RATE
+			var index := start + i
+			if index < buffer.size():
+				buffer[index] += sin(TAU * 62.0 * t) * minf(t * 80.0, 1.0) * exp(-22.0 * t) * 0.8
 	return _make_wav(buffer)
 
 ## Leises Windrauschen (geloopt)

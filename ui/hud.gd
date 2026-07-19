@@ -17,16 +17,39 @@ var _bleed_label: Label
 var _venom_label: Label
 var _announce_label: Label
 var _roster_panel: PanelContainer
+var _compass_label: Label
+var _damage_rect: ColorRect
+var _hallucination_rect: ColorRect
+var _pause_rect: ColorRect
+var _paused := false
 var _game_over_rect: ColorRect
 var _game_over_title: Label
 var _game_over_stats: Label
 var _game_over := false
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS  # Pause-Menue bleibt bedienbar
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
+
+	# Halluzinations-Overlay (Wespengift) — unter allen UI-Elementen
+	_hallucination_rect = ColorRect.new()
+	_hallucination_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hallucination_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hallucination_material := ShaderMaterial.new()
+	hallucination_material.shader = preload("res://shaders/hallucination.gdshader")
+	_hallucination_rect.material = hallucination_material
+	_hallucination_rect.visible = false
+	root.add_child(_hallucination_rect)
+
+	# Schadens-Vignette
+	_damage_rect = ColorRect.new()
+	_damage_rect.color = Color(0.8, 0.05, 0.05, 0.0)
+	_damage_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_damage_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_damage_rect)
 
 	_countdown_label = _label(root, 72, Color(1, 0.85, 0.3))
 	_countdown_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
@@ -39,6 +62,16 @@ func _ready() -> void:
 	_status_label.position = Vector2(-420, 16)
 	_status_label.size = Vector2(400, 30)
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+
+	# Kompass mit Fuellhorn-Richtung
+	_compass_label = _label(root, 17, Color(0.85, 0.85, 0.85))
+	_compass_label.anchor_left = 0.5
+	_compass_label.anchor_right = 0.5
+	_compass_label.offset_left = -200
+	_compass_label.offset_right = 200
+	_compass_label.offset_top = 8
+	_compass_label.offset_bottom = 32
+	_compass_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	_log_box = VBoxContainer.new()
 	_log_box.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -138,6 +171,46 @@ func _ready() -> void:
 	_fallen_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	fallen_box.add_child(_fallen_label)
 
+	# Pause-Menue
+	_pause_rect = ColorRect.new()
+	_pause_rect.color = Color(0, 0, 0, 0.7)
+	_pause_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_rect.visible = false
+	root.add_child(_pause_rect)
+	var pause_box := VBoxContainer.new()
+	pause_box.anchor_left = 0.5
+	pause_box.anchor_right = 0.5
+	pause_box.anchor_top = 0.5
+	pause_box.anchor_bottom = 0.5
+	pause_box.offset_left = -160
+	pause_box.offset_right = 160
+	pause_box.offset_top = -140
+	pause_box.offset_bottom = 140
+	pause_box.add_theme_constant_override("separation", 12)
+	_pause_rect.add_child(pause_box)
+	var pause_title := Label.new()
+	pause_title.text = "PAUSE"
+	pause_title.add_theme_font_size_override("font_size", 40)
+	pause_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pause_box.add_child(pause_title)
+	var resume_button := Button.new()
+	resume_button.text = "Fortsetzen"
+	resume_button.custom_minimum_size = Vector2(0, 42)
+	resume_button.pressed.connect(func() -> void: _set_paused(false))
+	pause_box.add_child(resume_button)
+	var menu_button := Button.new()
+	menu_button.text = "Zurueck zum Hauptmenue"
+	menu_button.custom_minimum_size = Vector2(0, 42)
+	menu_button.pressed.connect(func() -> void:
+		get_tree().paused = false
+		get_tree().change_scene_to_file("res://ui/main_menu.tscn"))
+	pause_box.add_child(menu_button)
+	var quit_button := Button.new()
+	quit_button.text = "Beenden"
+	quit_button.custom_minimum_size = Vector2(0, 42)
+	quit_button.pressed.connect(func() -> void: get_tree().quit())
+	pause_box.add_child(quit_button)
+
 	# Game-Over-Screen
 	_game_over_rect = ColorRect.new()
 	_game_over_rect.color = Color(0, 0, 0, 0.75)
@@ -224,20 +297,60 @@ func bind_player(bound: TributeBase) -> void:
 	player.needs_changed.connect(_on_needs_changed)
 	player.inventory_changed.connect(_on_inventory_changed)
 	player.interact_hint_changed.connect(func(hint: String) -> void: _hint_label.text = hint)
+	player.damaged.connect(func(_amount: float) -> void: _damage_rect.color.a = 0.4)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var hour: float = DayNight.hour
 	_status_label.text = "Tag %d   %02d:%02d   %s   %d am Leben" % [
 		GameManager.day_number, int(hour), int(fmod(hour, 1.0) * 60),
 		WeatherSystem.weather_name(), GameManager.tributes_alive]
-	if player != null:
-		_bleed_label.visible = player.bleeding_seconds > 0.0
-		_venom_label.visible = player.venom_seconds > 0.0
+
+	# Schadens-Vignette abklingen lassen
+	if _damage_rect.color.a > 0.0:
+		_damage_rect.color.a = maxf(0.0, _damage_rect.color.a - 0.8 * delta)
+
+	if player == null:
+		return
+	_bleed_label.visible = player.bleeding_seconds > 0.0
+	_venom_label.visible = player.venom_seconds > 0.0
+
+	# Halluzination bei Wespengift
+	var venom_intensity := clampf(player.venom_seconds / 8.0, 0.0, 1.0)
+	_hallucination_rect.visible = venom_intensity > 0.01
+	if _hallucination_rect.visible:
+		(_hallucination_rect.material as ShaderMaterial).set_shader_parameter("intensity", venom_intensity)
+
+	# Kompass + Fuellhorn-Peilung
+	if player.alive:
+		var forward: Vector3 = -player.global_transform.basis.z
+		var f2 := Vector2(forward.x, forward.z)
+		var heading := wrapf(rad_to_deg(atan2(f2.x, -f2.y)), 0.0, 360.0)
+		var sectors := ["N", "NO", "O", "SO", "S", "SW", "W", "NW"]
+		var sector: String = sectors[int(round(heading / 45.0)) % 8]
+		var to_horn := Vector2(-player.global_position.x, -player.global_position.z)
+		var rel := f2.angle_to(to_horn)
+		var arrow := "▲"
+		if absf(rel) > 2.6:
+			arrow = "▼"
+		elif rel > 0.45:
+			arrow = "▶"
+		elif rel < -0.45:
+			arrow = "◀"
+		_compass_label.text = "%s   ·   Fuellhorn %d m %s" % [sector, int(to_horn.length()), arrow]
 
 func _input(event: InputEvent) -> void:
 	if _game_over and event.is_action_pressed("ui_accept"):
 		GameManager.reset()
+		get_tree().paused = false
 		get_tree().reload_current_scene()
+	elif not _game_over and event.is_action_pressed("ui_cancel"):
+		_set_paused(not _paused)
+
+func _set_paused(value: bool) -> void:
+	_paused = value
+	get_tree().paused = value
+	_pause_rect.visible = value
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
 
 # --- Signal-Handler ---------------------------------------------------------
 

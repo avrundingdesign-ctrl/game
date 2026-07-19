@@ -10,7 +10,10 @@ const MOUSE_SENSITIVITY := 0.0025
 const INTERACT_RANGE := 2.5
 
 @onready var pivot: Node3D = $CameraPivot
+@onready var spring: SpringArm3D = $CameraPivot/SpringArm
+@onready var camera: Camera3D = $CameraPivot/SpringArm/Camera
 
+var is_aiming := false
 var _nearby_pickup: LootPickup = null
 var _nearby_bush: BerryBush = null
 var _can_drink := false
@@ -24,12 +27,12 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		pivot.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+		var sensitivity := MOUSE_SENSITIVITY * (0.55 if is_aiming else 1.0)
+		rotate_y(-event.relative.x * sensitivity)
+		pivot.rotate_x(-event.relative.y * sensitivity)
 		pivot.rotation.x = clamp(pivot.rotation.x, -1.2, 0.6)
-	elif event.is_action_pressed("ui_cancel"):
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	elif event is InputEventMouseButton and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+	elif event is InputEventMouseButton and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE \
+			and not get_tree().paused and GameManager.phase != GameManager.Phase.GAME_OVER:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	if not alive or GameManager.phase == GameManager.Phase.GAME_OVER:
@@ -73,6 +76,11 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	_update_interact_hint()
+
+	# Zielen mit dem Bogen (RMB): Kamera heranziehen, praeziser umsehen
+	is_aiming = Input.is_action_pressed("aim") and equipped_weapon().get("id", "") == "bogen"
+	spring.spring_length = lerpf(spring.spring_length, 1.6 if is_aiming else 3.5, 10.0 * delta)
+	camera.fov = lerpf(camera.fov, 52.0 if is_aiming else 75.0, 10.0 * delta)
 
 # --- Interaktion ------------------------------------------------------------
 
