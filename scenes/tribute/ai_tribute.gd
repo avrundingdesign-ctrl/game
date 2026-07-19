@@ -346,6 +346,9 @@ func _nearest_enemy(max_distance: float) -> TributeBase:
 		if profil == "karriero" and "profil" in other and other.profil == "karriero" \
 				and GameManager.tributes_alive > 8:
 			continue
+		# Zwei-Sieger-Regel: Distrikt-Partner schonen einander
+		if GameManager.two_victor_rule and other.district == district:
+			continue
 		var distance := global_position.distance_to(other.global_position)
 		if distance < best_distance and _can_detect(other, distance):
 			best_distance = distance

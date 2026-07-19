@@ -277,7 +277,10 @@ func _on_fallen_projection(fallen: Array) -> void:
 
 func _on_game_ended(victory: bool, stats: Dictionary) -> void:
 	_game_over = true
-	_game_over_title.text = "DU BIST SIEGER DER 74. SPIELE!" if victory else "DU BIST GEFALLEN"
+	if stats.get("double", false) and victory:
+		_game_over_title.text = "IHR SEID DIE SIEGER — DISTRIKT %d!\n(mit %s)" % [stats.distrikt, stats.partner]
+	else:
+		_game_over_title.text = "DU BIST SIEGER DER 74. SPIELE!" if victory else "DU BIST GEFALLEN"
 	_game_over_title.add_theme_color_override("font_color",
 		Color(1, 0.85, 0.3) if victory else Color(0.85, 0.3, 0.3))
 	_game_over_stats.text = "Überlebte Tage: %d      Kills: %d      Publikums-Rating: %.0f" % [

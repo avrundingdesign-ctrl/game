@@ -31,6 +31,8 @@ var deaths_today: Array[Dictionary] = []
 var all_fallen_districts: Array[int] = []
 var player_kills := 0
 var player_alive := true
+## Regelaenderung der Spielmacher: zwei Sieger, wenn aus demselben Distrikt
+var two_victor_rule := false
 
 var _phase_timer := 0.0
 var _countdown_left := 60
@@ -43,6 +45,7 @@ func reset() -> void:
 	all_fallen_districts = []
 	player_kills = 0
 	player_alive = true
+	two_victor_rule = false
 	_phase_timer = 0.0
 	_countdown_left = countdown_seconds
 
@@ -94,6 +97,24 @@ func report_death(tribute_name: String, district: int, killer_name: String) -> v
 		player_alive = false
 		if not observer_mode:
 			_end_game(false)
+			return
+	# Zwei-Sieger-Regel: die letzten beiden aus demselben Distrikt gewinnen zusammen
+	if two_victor_rule and tributes_alive == 2:
+		var survivors: Array[TributeBase] = []
+		for node in get_tree().get_nodes_in_group("tributes"):
+			if node is TributeBase and node.alive:
+				survivors.append(node)
+		if survivors.size() == 2 and survivors[0].district == survivors[1].district:
+			set_phase(Phase.GAME_OVER)
+			game_ended.emit(player_alive, {
+				"tage": day_number,
+				"kills": player_kills,
+				"uebrig": tributes_alive,
+				"rating": SponsorSystem.rating,
+				"double": true,
+				"partner": survivors[0].tribute_name if survivors[1].tribute_name == PLAYER_NAME else survivors[1].tribute_name,
+				"distrikt": survivors[0].district,
+			})
 			return
 	if tributes_alive <= 1:
 		_end_game(player_alive)

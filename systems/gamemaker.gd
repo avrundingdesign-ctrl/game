@@ -21,9 +21,16 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
-	GameManager.tribute_died.connect(func(_n: String, _d: int, _k: String) -> void:
-		_boredom_hours = 0.0)
+	GameManager.tribute_died.connect(_on_any_death)
 	GameManager.phase_changed.connect(_on_phase_changed)
+
+func _on_any_death(_n: String, _d: int, _k: String) -> void:
+	_boredom_hours = 0.0
+	# Der beruehmte Twist: Regelaenderung, wenn es eng wird
+	if not GameManager.two_victor_rule and GameManager.tributes_alive <= 10 and GameManager.tributes_alive > 2:
+		GameManager.two_victor_rule = true
+		announcement.emit("Regelaenderung! Zwei Tribute aus demselben Distrikt\nkoennen gemeinsam siegen.")
+		print("[Gamemaker] ZWEI-SIEGER-REGEL aktiviert")
 
 func reset() -> void:
 	_boredom_hours = 0.0
